@@ -1,44 +1,1155 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Serrano MP – Garagentore & Antriebe</title>
+  <title>Naturheilpraxis Hilfreich – Sympathikustherapie & Regulationsmedizin in Moers</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
-    header, footer { background: #333; color: white; padding: 20px; text-align: center; }
-    nav a { color: white; margin: 0 15px; text-decoration: none; }
-    .hero { padding: 60px 20px; background: #ddd; text-align: center; }
-    .section { padding: 30px; max-width: 800px; margin: auto; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sage:    #6b8f71;
+      --sage-dk: #4e6b53;
+      --sage-lt: #eaf2eb;
+      --cream:   #f9f6f0;
+      --warm:    #f0ebe0;
+      --text:    #2d2d2d;
+      --muted:   #6b6b6b;
+      --border:  #ddd5c8;
+      --gold:    #b08850;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(249,246,240,0.96);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .nav-logo-text {
+      font-size: 0.9rem;
+      font-weight: normal;
+      letter-spacing: 0.04em;
+      color: var(--sage-dk);
+      line-height: 1.2;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--sage); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    /* ── HERO ── */
+    #start {
+      min-height: 100vh;
+      background:
+        linear-gradient(160deg, rgba(107,143,113,0.12) 0%, rgba(240,235,224,0.4) 60%),
+        var(--cream);
+      display: flex;
+      align-items: center;
+      padding: 100px 2rem 60px;
+    }
+
+    .hero-inner {
+      max-width: 860px;
+      margin: auto;
+    }
+
+    .hero-label {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-motto {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: normal;
+      line-height: 1.25;
+      color: var(--sage-dk);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      max-width: 680px;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-tagline {
+      font-size: 1rem;
+      color: var(--text);
+      max-width: 620px;
+      margin-bottom: 2.5rem;
+      border-left: 3px solid var(--sage);
+      padding-left: 1rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .tag {
+      background: var(--sage-lt);
+      color: var(--sage-dk);
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--sage);
+      color: #fff;
+      text-decoration: none;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      padding: 0.85rem 2rem;
+      border-radius: 3px;
+      transition: background 0.2s;
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .btn:hover { background: var(--sage-dk); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--sage);
+      color: var(--sage-dk);
+    }
+    .btn-outline:hover { background: var(--sage-lt); }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 2rem; }
+    section:nth-child(even) { background: var(--warm); }
+
+    .section-inner {
+      max-width: 860px;
+      margin: auto;
+    }
+
+    .section-label {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 0.6rem;
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: normal;
+      color: var(--sage-dk);
+      margin-bottom: 1.5rem;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: normal;
+      color: var(--sage-dk);
+      margin-bottom: 0.75rem;
+    }
+
+    p { margin-bottom: 1rem; color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    .divider {
+      width: 48px; height: 2px;
+      background: var(--sage);
+      margin-bottom: 2rem;
+    }
+
+    /* ── BESCHWERDEN GRID ── */
+    .complaints-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+
+    .complaint-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .complaint-item::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+      flex-shrink: 0;
+    }
+
+    /* ── BEHANDLUNGSABLAUF ── */
+    .steps {
+      counter-reset: step;
+      margin: 1.5rem 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      counter-increment: step;
+      min-width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--sage);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .step-text { padding-top: 0.4rem; }
+
+    /* ── LEISTUNGEN ── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .service-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--sage);
+      border-radius: 4px;
+      padding: 1.5rem;
+    }
+
+    .service-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .service-card p { font-size: 0.9rem; color: var(--muted); margin: 0; }
+
+    /* ── HONORAR ── */
+    .honorar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .honorar-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2rem;
+    }
+
+    .honorar-card.featured {
+      border-color: var(--sage);
+      box-shadow: 0 4px 20px rgba(107,143,113,0.15);
+    }
+
+    .honorar-price {
+      font-size: 2.2rem;
+      color: var(--sage-dk);
+      margin: 0.5rem 0 0.25rem;
+    }
+
+    .honorar-duration {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .honorar-includes {
+      list-style: none;
+      font-size: 0.9rem;
+    }
+
+    .honorar-includes li {
+      padding: 0.3rem 0;
+      padding-left: 1.2rem;
+      position: relative;
+      color: var(--text);
+    }
+
+    .honorar-includes li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--sage);
+      font-size: 0.85rem;
+    }
+
+    .honorar-note {
+      background: var(--sage-lt);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      font-size: 0.9rem;
+      margin-top: 2rem;
+    }
+
+    /* ── FAQ ── */
+    .faq-list { margin-top: 1.5rem; }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 1.2rem 2rem 1.2rem 0;
+      cursor: pointer;
+      font-family: 'Georgia', serif;
+      font-size: 1rem;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      transition: color 0.2s;
+    }
+
+    .faq-question:hover { color: var(--sage-dk); }
+
+    .faq-icon {
+      min-width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--sage);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      color: var(--sage);
+      transition: transform 0.3s;
+      flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.2s;
+    }
+
+    .faq-item.open .faq-answer { max-height: 400px; }
+
+    .faq-answer-inner {
+      padding: 0 0 1.25rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* ── ÜBER MICH ── */
+    .about-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .about-photo {
+      width: 100%;
+      border-radius: 6px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    .timeline { margin-top: 1.25rem; }
+
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .timeline-year {
+      min-width: 50px;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      color: var(--sage);
+      padding-top: 0.15rem;
+    }
+
+    /* ── SYMPATHIKUSTHERAPIE ── */
+    .therapie-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    /* ── KONTAKT ── */
+    .kontakt-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .kontakt-info { }
+
+    .kontakt-info-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .kontakt-icon {
+      width: 40px; height: 40px;
+      background: var(--sage-lt);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    }
+
+    .kontakt-notice {
+      background: var(--sage-lt);
+      border-radius: 4px;
+      padding: 1.25rem;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    form { display: flex; flex-direction: column; gap: 1rem; }
+
+    label {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: #fff;
+      font-family: 'Georgia', serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--sage);
+    }
+
+    textarea { resize: vertical; min-height: 120px; }
+
+    /* ── RECHTLICHER HINWEIS ── */
+    .legal-box {
+      background: var(--warm);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-top: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--sage-dk);
+      color: rgba(255,255,255,0.85);
+      padding: 3rem 2rem;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.875rem;
+    }
+
+    .footer-inner {
+      max-width: 860px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+    }
+
+    .footer-col h4 {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 1rem;
+      font-weight: normal;
+    }
+
+    .footer-col p, .footer-col a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      display: block;
+      margin-bottom: 0.4rem;
+      font-size: 0.875rem;
+    }
+
+    .footer-col a:hover { color: #fff; }
+
+    .footer-bottom {
+      max-width: 860px;
+      margin: 2rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        position: fixed;
+        top: 64px; left: 0; right: 0;
+        background: var(--cream);
+        flex-direction: column;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+        gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .hamburger { display: flex; }
+
+      .about-layout { grid-template-columns: 1fr; }
+      .about-photo-placeholder { max-width: 240px; }
+      .kontakt-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 500px) {
+      section { padding: 60px 1.25rem; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Serrano MP</h1>
-    <nav>
-      <a href="#">Start</a>
-      <a href="#">Leistungen</a>
-      <a href="#">Kontakt</a>
-    </nav>
-  </header>
 
-  <section class="hero">
-    <h2>Garagentore & Motoren vom Profi</h2>
-    <p>Einbau – Reparatur – Automatisierung</p>
-  </section>
+<!-- NAVIGATION -->
+<nav>
+  <a class="nav-logo" href="#start">
+    <img src="logo.jpg" alt="Naturheilpraxis Hilfreich Logo">
+    <span class="nav-logo-text">Naturheilpraxis<br>Hilfreich</span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#start" onclick="closeNav()">Start</a></li>
+    <li><a href="#behandlung" onclick="closeNav()">Behandlung</a></li>
+    <li><a href="#therapie" onclick="closeNav()">Sympathikustherapie</a></li>
+    <li><a href="#honorar" onclick="closeNav()">Honorar</a></li>
+    <li><a href="#uebermich" onclick="closeNav()">Über mich</a></li>
+    <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
+    <li><a href="#kontakt" onclick="closeNav()">Kontakt</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menü" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
 
-  <section class="section">
-    <h3>Unsere Leistungen</h3>
-    <ul>
-      <li>Sektionaltore – modern und platzsparend</li>
-      <li>Elektrische Antriebe – bequem per Fernbedienung</li>
-      <li>Wartung und Nachrüstung bestehender Tore</li>
-    </ul>
-  </section>
+<!-- HERO -->
+<section id="start">
+  <div class="hero-inner">
+    <img src="logo.jpg" alt="Naturheilpraxis Hilfreich" style="height:90px;width:auto;object-fit:contain;margin-bottom:1.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.08))">
+    <p class="hero-label">Naturheilpraxis Hilfreich · Moers</p>
+    <p class="hero-motto">Medicis curat, natura sanat.</p>
+    <h1 class="hero-title">Sympathikustherapie &amp;<br>Regulationsmedizin</h1>
+    <p class="hero-sub">
+      In meiner Praxis begleite ich Menschen mit stressbedingten Beschwerden,
+      chronischen Schmerzen und funktionellen Störungen des Nervensystems.
+    </p>
+    <p class="hero-tagline">
+      Mein Behandlungsansatz verbindet langjährige Erfahrung aus Bewegung, Prävention,
+      Ernährung und Naturheilkunde mit einem besonderen Fokus auf die Regulation des
+      Nervensystems.
+    </p>
+    <div class="hero-tags">
+      <span class="tag">15+ Jahre Erfahrung</span>
+      <span class="tag">Bewegung &amp; Training</span>
+      <span class="tag">Schmerzprävention</span>
+      <span class="tag">Ernährungsberatung</span>
+      <span class="tag">Naturheilkunde</span>
+      <span class="tag">Dozententätigkeit</span>
+    </div>
+    <a href="#kontakt" class="btn">Termin anfragen</a>
+    <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
+  </div>
+</section>
 
-  <footer>
-    <p>Kontakt: info@serranomp.com | Tel: 0123 456789</p>
-  </footer>
+<!-- BEHANDLUNG / STARTSEITE-INHALT -->
+<section id="behandlung">
+  <div class="section-inner">
+    <p class="section-label">Mein Ansatz</p>
+    <h2>Ganzheitliche Begleitung</h2>
+    <div class="divider"></div>
+
+    <p>
+      Viele Beschwerden entstehen oder werden verstärkt durch eine anhaltende Belastung
+      des vegetativen Nervensystems. Ziel meiner Behandlung ist es, das Gleichgewicht
+      zwischen Anspannung und Regeneration wieder zu fördern.
+    </p>
+    <p>
+      Dabei kombiniere ich verschiedene naturheilkundliche Verfahren wie Sympathikustherapie,
+      Atemtherapie und manuelle Regulationstechniken zu einem individuellen Behandlungskonzept.
+    </p>
+    <p>
+      Mir ist wichtig, Beschwerden nicht isoliert zu betrachten. Gesundheit entsteht aus
+      dem Zusammenspiel von Nervensystem, Bewegung, Ernährung, Regeneration und den
+      individuellen Lebensumständen eines Menschen.
+    </p>
+
+    <h3 style="margin-top:2.5rem">Mögliche Behandlungsanlässe</h3>
+    <div class="complaints-grid">
+      <div class="complaint-item">Nacken- und Rückenschmerzen</div>
+      <div class="complaint-item">Spannungskopfschmerzen</div>
+      <div class="complaint-item">Migräne</div>
+      <div class="complaint-item">Schlafstörungen</div>
+      <div class="complaint-item">Erschöpfung &amp; Stress</div>
+      <div class="complaint-item">Tinnitus</div>
+      <div class="complaint-item">Innere Unruhe</div>
+      <div class="complaint-item">Vegetative Dysbalancen</div>
+      <div class="complaint-item">Funktionelle Beschwerden</div>
+      <div class="complaint-item">Stressbedingte Beschwerden</div>
+    </div>
+
+    <h3 style="margin-top:2.5rem">Leistungen</h3>
+    <div class="services-grid">
+      <div class="service-card">
+        <h3>Sympathikustherapie</h3>
+        <p>nach Dr. Steinrücken – gezielte Behandlung von Haut- und Nervenpunkten zur Regulation des vegetativen Nervensystems</p>
+      </div>
+      <div class="service-card">
+        <h3>Neuraltherapeutische Verfahren</h3>
+        <p>Gezielte Einflussnahme auf Regulationsprozesse über nervale Strukturen</p>
+      </div>
+      <div class="service-card">
+        <h3>Atemtherapie</h3>
+        <p>Unterstützung des Nervensystems und Förderung der Regeneration durch gezielte Atemtechniken</p>
+      </div>
+      <div class="service-card">
+        <h3>Manuelle Regulationstechniken</h3>
+        <p>Sanfte manuelle Verfahren zur Verbesserung der körpereigenen Regulationsfähigkeit</p>
+      </div>
+      <div class="service-card">
+        <h3>Ernährungsberatung</h3>
+        <p>Individuelle Beratung zu ernährungsbedingten Einflussfaktoren auf Ihre Gesundheit</p>
+      </div>
+      <div class="service-card">
+        <h3>Blutbild- &amp; Laborbetrachtung</h3>
+        <p>Vorhandene Labor- und Blutwerte werden in die ganzheitliche Betrachtung einbezogen</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2.5rem">So läuft die Behandlung ab</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Ausführliche Anamnese</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Ganzheitliche Betrachtung Ihrer Beschwerden</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Untersuchung</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Individuelle Therapieplanung</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text">Gegebenenfalls erste Behandlung</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text">Gemeinsame Festlegung der nächsten Schritte</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SYMPATHIKUSTHERAPIE -->
+<section id="therapie">
+  <div class="section-inner">
+    <p class="section-label">Schwerpunkt</p>
+    <h2>Sympathikustherapie</h2>
+    <div class="divider"></div>
+
+    <p>
+      Die Sympathikustherapie nach Dr. Steinrücken stellt einen Schwerpunkt meiner Praxis dar.
+    </p>
+    <p>
+      Der Sympathikus ist Teil des vegetativen Nervensystems und beeinflusst zahlreiche
+      Funktionen des Körpers. Anhaltende Belastungen, Stress oder lang bestehende Beschwerden
+      können nach naturheilkundlicher Auffassung zu einer veränderten Regulation führen.
+    </p>
+
+    <div class="therapie-box">
+      <h3>Wie läuft die Behandlung ab?</h3>
+      <p>
+        Im Rahmen der Sympathikustherapie werden bestimmte Haut-, Nerven- und Regulationspunkte
+        untersucht und behandelt. Diese Punkte werden als Reflex- und Regulationszonen betrachtet,
+        über die Einfluss auf das vegetative Nervensystem genommen werden kann.
+      </p>
+      <p>
+        Durch die gezielte Reizung ausgewählter Punkte sollen Regulationsprozesse angeregt und
+        festgefahrene Reaktionsmuster des Körpers positiv beeinflusst werden.
+      </p>
+      <p>
+        Je nach Befund können die Punkte mit speziellen Dauernadeln, Akupunkturpunkten, kleinen
+        Druckpflastern oder Dauerkugeln behandelt werden. Die Reize verbleiben dabei über einen
+        längeren Zeitraum an den entsprechenden Punkten.
+      </p>
+    </div>
+
+    <p style="margin-top:1.5rem">
+      Die Behandlung wird individuell auf das jeweilige Beschwerdebild abgestimmt und kann mit
+      Atemtherapie, manuellen Techniken, Ernährungsberatung sowie weiteren naturheilkundlichen
+      Maßnahmen kombiniert werden.
+    </p>
+    <p>
+      Ziel ist es, die Balance zwischen Anspannung und Regeneration zu fördern und die
+      Selbstregulationsfähigkeit des Körpers zu unterstützen.
+    </p>
+
+    <div class="legal-box" style="margin-top:1.5rem">
+      <strong>Hinweis:</strong> Die vorgestellten naturheilkundlichen Verfahren gehören zur
+      Erfahrungsheilkunde. Die beschriebenen Anwendungsgebiete beruhen auf naturheilkundlichen
+      Erfahrungen und Erkenntnissen.
+    </div>
+  </div>
+</section>
+
+<!-- HONORAR -->
+<section id="honorar">
+  <div class="section-inner">
+    <p class="section-label">Kosten & Erstattung</p>
+    <h2>Honorar</h2>
+    <div class="divider"></div>
+
+    <div class="honorar-grid">
+      <div class="honorar-card featured">
+        <h3>Ersttermin</h3>
+        <div class="honorar-price">149 €</div>
+        <div class="honorar-duration">Dauer: bis zu 60 Minuten</div>
+        <ul class="honorar-includes">
+          <li>Ausführliche Anamnese</li>
+          <li>Untersuchung</li>
+          <li>Sichtung vorhandener Befunde</li>
+          <li>Individuelle Therapieplanung</li>
+          <li>Gegebenenfalls erste Behandlung</li>
+        </ul>
+      </div>
+      <div class="honorar-card">
+        <h3>Folgetermin</h3>
+        <div class="honorar-price">95 €</div>
+        <div class="honorar-duration">Dauer: bis zu 30 Minuten</div>
+        <ul class="honorar-includes">
+          <li>Sympathikustherapie</li>
+          <li>Atemtherapie</li>
+          <li>Manuelle Regulationstechniken</li>
+          <li>Naturheilkundliche Beratung</li>
+          <li>Verlaufskontrolle</li>
+          <li>Ernährungsberatung</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="font-size:0.9rem;color:var(--muted);margin-top:1rem">
+      Weitere Termine nach individuellem Aufwand.
+    </p>
+
+    <div class="honorar-note">
+      <strong>Erstattung durch Krankenkassen:</strong><br>
+      Die Abrechnung erfolgt auf Grundlage einer privaten Honorarvereinbarung und orientiert sich
+      am Gebührenverzeichnis für Heilpraktiker (GebüH). Die Erstattung durch private
+      Krankenversicherungen, Beihilfestellen oder Heilpraktiker-Zusatzversicherungen erfolgt je
+      nach individuellem Tarif. Bitte informieren Sie sich vor Behandlungsbeginn über die
+      Bedingungen Ihres Versicherungsvertrages. Unabhängig von einer möglichen Erstattung ist
+      das vereinbarte Honorar vom Patienten zu entrichten.
+    </div>
+  </div>
+</section>
+
+<!-- ÜBER MICH -->
+<section id="uebermich">
+  <div class="section-inner">
+    <p class="section-label">Meine Person</p>
+    <h2>Über mich</h2>
+    <div class="divider"></div>
+
+    <div class="about-layout">
+      <div>
+        <img src="foto-heilpraktikerin.jpg" alt="Heilpraktikerin Naturheilpraxis Hilfreich" class="about-photo">
+      </div>
+      <div>
+        <p>
+          Seit vielen Jahren begleite ich Menschen auf ihrem Weg zu mehr Gesundheit,
+          Beweglichkeit und Wohlbefinden.
+        </p>
+        <p>
+          Durch die tägliche Arbeit mit Menschen wurde mir immer bewusster, dass Gesundheit
+          weit über Bewegung und Training hinausgeht. Viele Beschwerden haben ihre Ursachen
+          nicht allein im Bewegungsapparat, sondern stehen im Zusammenhang mit Stress, dem
+          Nervensystem, dem Stoffwechsel oder anderen Regulationsprozessen des Körpers.
+        </p>
+        <p>
+          Als Mutter von drei Kindern weiß ich aus eigener Erfahrung, wie wichtig ein gesunder
+          Ausgleich zwischen Belastung und Regeneration ist. Deshalb ist es mir ein besonderes
+          Anliegen, Menschen dabei zu unterstützen, ihre Gesundheit nachhaltig zu stärken und
+          ihre Selbstregulationskräfte zu fördern.
+        </p>
+        <p>
+          Ich freue mich darauf, Sie auf Ihrem individuellen Gesundheitsweg zu begleiten.
+        </p>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="timeline-year">2006</span>
+            <span>Beginn der Tätigkeit als Tanzpädagogin für Kinder, Jugendliche und Erwachsene</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">2010–13</span>
+            <span>Duale Ausbildung zur Sport- und Fitnesskauffrau (IHK); Qualifikation als Gesundheits- und Fitnesstrainerin sowie Betriebswirtin</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">Fortb.</span>
+            <span>Personal Training, Ernährungsberatung, medizinisches Fitnesstraining, Rückengesundheit und Schmerzprävention</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">Dozent.</span>
+            <span>Jahrelange Tätigkeit als Kursleiterin, Ausbilderin und Dozentin; Weitergabe von Wissen an alle Altersgruppen</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">3 Jahre</span>
+            <span>Mehrjährige Ausbildung bei einem erfahrenen Heilpraktiker und Osteopathen in Naturheilkunde und ganzheitlichen Behandlungskonzepten</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-year">2024</span>
+            <span>Erteilung der Heilpraktikererlaubnis</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-inner">
+    <p class="section-label">Häufige Fragen</p>
+    <h2>FAQ</h2>
+    <div class="divider"></div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Wie lange dauert ein Termin?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Der Ersttermin dauert bis zu 60 Minuten und umfasst eine ausführliche Anamnese,
+            Untersuchung, Therapieplanung und gegebenenfalls eine erste Behandlung. Folgetermine
+            dauern bis zu 30 Minuten.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Was kostet die Behandlung?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Der Ersttermin (bis zu 60 Min.) kostet 149 €, Folgetermine (bis zu 30 Min.) 95 €.
+            Weitere Termine richten sich nach dem individuellen Aufwand.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Werden die Kosten erstattet?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Private Krankenversicherungen, Beihilfestellen sowie Heilpraktiker-Zusatzversicherungen
+            übernehmen die Kosten je nach individuellem Tarif. Bitte informieren Sie sich vor
+            Behandlungsbeginn bei Ihrer Versicherung. Gesetzliche Krankenkassen übernehmen die
+            Kosten in der Regel nicht.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Muss ich Befunde mitbringen?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Vorhandene Befunde, Labor- oder Blutwerte sind hilfreich und können in die
+            ganzheitliche Betrachtung einbezogen werden. Sie sind aber keine Voraussetzung
+            für einen Termin.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Wie viele Termine sind erforderlich?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Das richtet sich nach dem individuellen Beschwerdebild und dem Behandlungsverlauf.
+            Nach dem Ersttermin legen wir gemeinsam die nächsten Schritte fest. Die Anzahl der
+            Folgetermine wird individuell abgestimmt.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Kann ich kommen, wenn ich bereits ärztlich behandelt werde?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Ja. Naturheilkundliche Behandlung ergänzt die schulmedizinische Versorgung. Bitte
+            informieren Sie mich bei der Anamnese über laufende Behandlungen und Medikamente,
+            damit ich dies bei der Planung berücksichtigen kann.
+          </div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Warum bevorzugen Sie Kontakt per E-Mail statt Telefon?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            Um ausreichend Zeit für meine Patienten und meine Familie zu haben, erfolgt die
+            Kontaktaufnahme bevorzugt per E-Mail. So kann ich jede Anfrage in Ruhe beantworten
+            und gehe sicher, dass keine Anfrage verloren geht. Ich antworte üblicherweise
+            innerhalb von 1–2 Werktagen.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="section-inner">
+    <p class="section-label">Termin & Anfragen</p>
+    <h2>Kontakt</h2>
+    <div class="divider"></div>
+
+    <div class="kontakt-layout">
+      <div class="kontakt-info">
+        <div class="kontakt-info-item">
+          <div class="kontakt-icon">📍</div>
+          <div>
+            <strong>Praxisadresse</strong><br>
+            47443 Moers
+          </div>
+        </div>
+        <div class="kontakt-info-item">
+          <div class="kontakt-icon">✉</div>
+          <div>
+            <strong>E-Mail</strong><br>
+            <a href="mailto:[deine@email.de]" style="color:var(--sage)">[deine@email.de]</a>
+          </div>
+        </div>
+
+        <div class="kontakt-notice">
+          <strong>Bitte beachten Sie:</strong><br>
+          Da ich mich während der Behandlungen und aus familiären Gründen nicht jederzeit
+          telefonisch melden kann, erfolgt die Kontaktaufnahme bevorzugt per E-Mail.
+          Ich beantworte Anfragen üblicherweise innerhalb von 1–2 Werktagen.
+        </div>
+      </div>
+
+      <div>
+        <form onsubmit="handleForm(event)">
+          <div>
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required placeholder="Ihr Name">
+          </div>
+          <div>
+            <label for="email">E-Mail-Adresse</label>
+            <input type="email" id="email" name="email" required placeholder="ihre@email.de">
+          </div>
+          <div>
+            <label for="anliegen">Anliegen</label>
+            <textarea id="anliegen" name="anliegen" placeholder="Bitte schildern Sie kurz Ihr Anliegen…"></textarea>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" required style="width:auto;margin-right:0.5rem">
+              Ich stimme der Verarbeitung meiner Daten zur Beantwortung meiner Anfrage zu.
+            </label>
+          </div>
+          <button type="submit" class="btn" style="border:none;cursor:pointer">
+            Anfrage senden
+          </button>
+        </form>
+        <p id="formMsg" style="display:none;margin-top:1rem;color:var(--sage);font-size:0.95rem">
+          Vielen Dank! Ihre Anfrage wurde übermittelt. Ich melde mich in Kürze.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-col">
+      <h4>Praxis</h4>
+      <p>Naturheilpraxis Hilfreich<br>Regulationsmedizin &amp;<br>Sympathikustherapie</p>
+      <p style="margin-top:0.75rem;font-style:italic;color:rgba(255,255,255,0.5)">
+        Medicis curat, natura sanat.
+      </p>
+    </div>
+    <div class="footer-col">
+      <h4>Adresse</h4>
+      <p>47443 Moers</p>
+      <a href="mailto:[deine@email.de]">[deine@email.de]</a>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <a href="#start">Start</a>
+      <a href="#behandlung">Behandlung</a>
+      <a href="#therapie">Sympathikustherapie</a>
+      <a href="#honorar">Honorar</a>
+      <a href="#uebermich">Über mich</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+    </div>
+    <div class="footer-col">
+      <h4>Rechtliches</h4>
+      <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.6">
+        Die vorgestellten naturheilkundlichen Verfahren gehören zur Erfahrungsheilkunde.
+        Die beschriebenen Anwendungsgebiete beruhen auf naturheilkundlichen Erfahrungen
+        und Erkenntnissen.
+      </p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 Naturheilpraxis Hilfreich · Moers</span>
+    <span>Impressum &nbsp;·&nbsp; Datenschutz</span>
+  </div>
+</footer>
+
+<script>
+  function toggleNav() {
+    document.getElementById('navLinks').classList.toggle('open');
+  }
+  function closeNav() {
+    document.getElementById('navLinks').classList.remove('open');
+  }
+
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  function handleForm(e) {
+    e.preventDefault();
+    document.getElementById('formMsg').style.display = 'block';
+    e.target.reset();
+  }
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      if (window.scrollY >= sec.offsetTop - 80) current = sec.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current ? 'var(--sage)' : '';
+    });
+  });
+</script>
+
 </body>
 </html>
