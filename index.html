@@ -590,7 +590,36 @@
       color: rgba(255,255,255,0.4);
     }
 
-    /* ── MOBILE ── */
+    /* ── HERO LAYOUT ── */
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 3rem;
+      align-items: center;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .hero-photo {
+      width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    @media (max-width: 820px) {
+      .hero-layout {
+        grid-template-columns: 1fr;
+      }
+      .hero-photo {
+        max-width: 280px;
+        margin: 0 auto;
+        display: block;
+        aspect-ratio: 1/1;
+        object-position: center top;
+      }
+    }
     @media (max-width: 768px) {
       .nav-links {
         display: none;
@@ -640,30 +669,35 @@
 
 <!-- HERO -->
 <section id="start">
-  <div class="hero-inner">
-    <img src="logo.jpg" alt="Naturheilpraxis Hilfreich" style="height:90px;width:auto;object-fit:contain;margin-bottom:1.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.08))">
-    <p class="hero-label">Naturheilpraxis Hilfreich · Moers</p>
-    <p class="hero-motto">Medicis curat, natura sanat.</p>
-    <h1 class="hero-title">Sympathikustherapie &amp;<br>Regulationsmedizin</h1>
-    <p class="hero-sub">
-      In meiner Praxis begleite ich Menschen mit stressbedingten Beschwerden,
-      chronischen Schmerzen und funktionellen Störungen des Nervensystems.
-    </p>
-    <p class="hero-tagline">
-      Mein Behandlungsansatz verbindet langjährige Erfahrung aus Bewegung, Prävention,
-      Ernährung und Naturheilkunde mit einem besonderen Fokus auf die Regulation des
-      Nervensystems.
-    </p>
-    <div class="hero-tags">
-      <span class="tag">15+ Jahre Erfahrung</span>
-      <span class="tag">Bewegung &amp; Training</span>
-      <span class="tag">Schmerzprävention</span>
-      <span class="tag">Ernährungsberatung</span>
-      <span class="tag">Naturheilkunde</span>
-      <span class="tag">Dozententätigkeit</span>
+  <div class="hero-layout">
+    <div>
+      <img src="logo.jpg" alt="Naturheilpraxis Hilfreich" style="height:80px;width:auto;object-fit:contain;margin-bottom:1.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.08))">
+      <p class="hero-label">Naturheilpraxis Hilfreich · Moers</p>
+      <p class="hero-motto">Medicis curat, natura sanat. —<br><em>Der Therapeut begleitet, die Natur heilt.</em></p>
+      <h1 class="hero-title">Sympathikustherapie &amp;<br>Regulationsmedizin</h1>
+      <p class="hero-sub">
+        In meiner Praxis begleite ich Menschen mit stressbedingten Beschwerden,
+        chronischen Schmerzen und funktionellen Störungen des Nervensystems.
+      </p>
+      <p class="hero-tagline">
+        Mein Behandlungsansatz verbindet langjährige Erfahrung aus Bewegung, Prävention,
+        Ernährung und Naturheilkunde mit einem besonderen Fokus auf die Regulation des
+        Nervensystems.
+      </p>
+      <div class="hero-tags">
+        <span class="tag">15+ Jahre Erfahrung</span>
+        <span class="tag">Bewegung &amp; Training</span>
+        <span class="tag">Schmerzprävention</span>
+        <span class="tag">Ernährungsberatung</span>
+        <span class="tag">Naturheilkunde</span>
+        <span class="tag">Dozententätigkeit</span>
+      </div>
+      <a href="#kontakt" class="btn">Termin anfragen</a>
+      <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
     </div>
-    <a href="#kontakt" class="btn">Termin anfragen</a>
-    <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
+    <div>
+      <img src="foto-heilpraktikerin.jpg" alt="Lisa Serrano Martin-Prieto – Heilpraktikerin" class="hero-photo">
+    </div>
   </div>
 </section>
 
@@ -707,7 +741,7 @@
     <div class="services-grid">
       <div class="service-card">
         <h3>Sympathikustherapie</h3>
-        <p>nach Dr. Steinrücken – gezielte Behandlung von Haut- und Nervenpunkten zur Regulation des vegetativen Nervensystems</p>
+        <p>Gezielte Behandlung von Haut- und Nervenpunkten zur Regulation des vegetativen Nervensystems</p>
       </div>
       <div class="service-card">
         <h3>Neuraltherapeutische Verfahren</h3>
@@ -724,10 +758,6 @@
       <div class="service-card">
         <h3>Ernährungsberatung</h3>
         <p>Individuelle Beratung zu ernährungsbedingten Einflussfaktoren auf Ihre Gesundheit</p>
-      </div>
-      <div class="service-card">
-        <h3>Blutbild- &amp; Laborbetrachtung</h3>
-        <p>Vorhandene Labor- und Blutwerte werden in die ganzheitliche Betrachtung einbezogen</p>
       </div>
     </div>
 
@@ -751,7 +781,7 @@
     <div class="divider"></div>
 
     <p>
-      Die Sympathikustherapie nach Dr. Steinrücken stellt einen Schwerpunkt meiner Praxis dar.
+      Die Sympathikustherapie stellt einen Schwerpunkt meiner Praxis dar.
     </p>
     <p>
       Der Sympathikus ist Teil des vegetativen Nervensystems und beeinflusst zahlreiche
@@ -771,9 +801,9 @@
         festgefahrene Reaktionsmuster des Körpers positiv beeinflusst werden.
       </p>
       <p>
-        Je nach Befund können die Punkte mit speziellen Dauernadeln, Akupunkturpunkten, kleinen
-        Druckpflastern oder Dauerkugeln behandelt werden. Die Reize verbleiben dabei über einen
-        längeren Zeitraum an den entsprechenden Punkten.
+        Je nach Befund können die Punkte mit speziellen Dauernadeln, Akupunkturpunkten oder
+        Dauerkugeln behandelt werden. Die Reize verbleiben dabei über einen längeren Zeitraum
+        an den entsprechenden Punkten.
       </p>
     </div>
 
@@ -806,7 +836,7 @@
       <div class="honorar-card featured">
         <h3>Ersttermin</h3>
         <div class="honorar-price">149 €</div>
-        <div class="honorar-duration">Dauer: bis zu 60 Minuten</div>
+        <div class="honorar-duration">Dauer: bis zu 45 Minuten</div>
         <ul class="honorar-includes">
           <li>Ausführliche Anamnese</li>
           <li>Untersuchung</li>
