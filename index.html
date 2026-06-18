@@ -1263,8 +1263,27 @@
 
   function handleForm(e) {
     e.preventDefault();
-    document.getElementById('formMsg').style.display = 'block';
-    e.target.reset();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    btn.textContent = 'Wird gesendet…';
+    btn.disabled = true;
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    }).then(response => {
+      if (response.ok) {
+        document.getElementById('formMsg').style.display = 'block';
+        form.reset();
+      } else {
+        alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+      }
+    }).catch(() => {
+      alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+    }).finally(() => {
+      btn.textContent = 'Anfrage senden';
+      btn.disabled = false;
+    });
   }
 
   // Active nav link on scroll
