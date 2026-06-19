@@ -188,10 +188,12 @@
 
         <div class="form-group">
           <label class="checkbox-label">
-            <input type="checkbox" required>
+            <input type="checkbox" name="datenschutz_zustimmung" value="ja" required>
             Ich stimme der Verarbeitung meiner Daten (Name, E-Mail, Telefon) zur Bearbeitung dieser Terminanfrage gemäß der <a href="index.html#datenschutz" style="color:var(--sage)">Datenschutzerklärung</a> zu. *
           </label>
         </div>
+
+        <div id="formError" style="display:none;color:#b00;background:#fff0f0;border:1px solid #f5c6cb;border-radius:6px;padding:0.75rem;margin-top:0.5rem;font-size:0.85rem;line-height:1.4"></div>
 
         <div class="modal-actions">
           <button type="submit" class="btn" id="submitBtn">Anfrage absenden</button>
@@ -378,15 +380,14 @@ function submitBooking(e) {
     method: 'POST',
     body: data,
     headers: { 'Accept': 'application/json' }
-  }).then(res => {
-    if (res.ok) {
-      // Slot als gebucht markieren
+  }).then(res => res.json().then(json => ({ ok: res.ok, json })))
+    .then(({ ok, json }) => {
+    if (ok) {
       const slotId = document.getElementById('slotId').value;
       const updated = JSON.parse(localStorage.getItem('bookedSlots') || '[]');
       if (!updated.includes(slotId)) updated.push(slotId);
       localStorage.setItem('bookedSlots', JSON.stringify(updated));
 
-      // Kalender aktualisieren
       const ev = calendar.getEventById(slotId);
       if (ev) {
         ev.setProp('title', 'Vergeben');
@@ -397,12 +398,15 @@ function submitBooking(e) {
       document.getElementById('bookingForm').style.display = 'none';
       document.getElementById('successBox').style.display = 'block';
     } else {
-      alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+      const msg = json && json.error ? json.error : (json && json.errors ? json.errors.map(e => e.message).join(', ') : 'Unbekannter Fehler');
+      document.getElementById('formError').textContent = 'Fehler: ' + msg + ' – Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de';
+      document.getElementById('formError').style.display = 'block';
       btn.textContent = 'Anfrage absenden';
       btn.disabled = false;
     }
-  }).catch(() => {
-    alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+  }).catch(err => {
+    document.getElementById('formError').textContent = 'Verbindungsfehler. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de';
+    document.getElementById('formError').style.display = 'block';
     btn.textContent = 'Anfrage absenden';
     btn.disabled = false;
   });
