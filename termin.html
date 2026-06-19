@@ -374,17 +374,12 @@ function submitBooking(e) {
   btn.disabled = true;
 
   const form = e.target;
-  const formData = new FormData(form);
-  const payload = {};
-  formData.forEach((value, key) => { payload[key] = value; });
+  const data = new FormData(form);
 
   fetch('https://formspree.io/f/mykaqerp', {
     method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    }
+    body: data,
+    headers: { 'Accept': 'application/json' }
   }).then(async res => {
     let json = {};
     try { json = await res.json(); } catch (_) {}
