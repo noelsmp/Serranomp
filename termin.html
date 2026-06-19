@@ -374,15 +374,22 @@ function submitBooking(e) {
   btn.disabled = true;
 
   const form = e.target;
-  const data = new FormData(form);
+  const formData = new FormData(form);
+  const payload = {};
+  formData.forEach((value, key) => { payload[key] = value; });
 
   fetch('https://formspree.io/f/mykaqerp', {
     method: 'POST',
-    body: data,
-    headers: { 'Accept': 'application/json' }
-  }).then(res => res.json().then(json => ({ ok: res.ok, json })))
-    .then(({ ok, json }) => {
-    if (ok) {
+    body: JSON.stringify(payload),
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  }).then(async res => {
+    let json = {};
+    try { json = await res.json(); } catch (_) {}
+
+    if (res.ok) {
       const slotId = document.getElementById('slotId').value;
       const updated = JSON.parse(localStorage.getItem('bookedSlots') || '[]');
       if (!updated.includes(slotId)) updated.push(slotId);
@@ -398,18 +405,22 @@ function submitBooking(e) {
       document.getElementById('bookingForm').style.display = 'none';
       document.getElementById('successBox').style.display = 'block';
     } else {
-      const msg = json && json.error ? json.error : (json && json.errors ? json.errors.map(e => e.message).join(', ') : 'Unbekannter Fehler');
-      document.getElementById('formError').textContent = 'Fehler: ' + msg + ' – Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de';
-      document.getElementById('formError').style.display = 'block';
+      const msg = json.error || (json.errors ? json.errors.map(x => x.message).join(', ') : 'HTTP ' + res.status);
+      showFormError('Fehler: ' + msg + ' – Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
       btn.textContent = 'Anfrage absenden';
       btn.disabled = false;
     }
-  }).catch(err => {
-    document.getElementById('formError').textContent = 'Verbindungsfehler. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de';
-    document.getElementById('formError').style.display = 'block';
+  }).catch(() => {
+    showFormError('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung oder schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
     btn.textContent = 'Anfrage absenden';
     btn.disabled = false;
   });
+
+  function showFormError(msg) {
+    const el = document.getElementById('formError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
 }
 </script>
 </body>
