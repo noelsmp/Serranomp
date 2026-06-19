@@ -82,6 +82,15 @@
 
     .nav-links a:hover { color: var(--sage); }
 
+    .nav-cta {
+      background: var(--sage);
+      color: #fff !important;
+      padding: 0.35rem 0.9rem;
+      border-radius: 4px;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--sage-dk) !important; color: #fff !important; }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -661,6 +670,7 @@
     <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
     <li><a href="#kontakt" onclick="closeNav()">Kontakt</a></li>
     <li><a href="#impressum" onclick="closeNav()">Impressum</a></li>
+    <li><a href="termin.html" class="nav-cta" onclick="closeNav()">Termin buchen</a></li>
   </ul>
   <button class="hamburger" id="hamburger" aria-label="Menü" onclick="toggleNav()">
     <span></span><span></span><span></span>
@@ -690,7 +700,7 @@
         <span class="tag">Naturheilkunde</span>
         <span class="tag">Dozententätigkeit</span>
       </div>
-      <a href="#kontakt" class="btn">Termin anfragen</a>
+      <a href="termin.html" class="btn">Termin buchen</a>
       <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
     </div>
     <div>
