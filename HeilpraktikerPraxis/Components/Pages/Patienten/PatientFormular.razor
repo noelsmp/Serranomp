@@ -1,0 +1,218 @@
+@page "/patienten/neu"
+@page "/patienten/{Id:int}/bearbeiten"
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(Id == null ? "Neuer Patient" : "Patient bearbeiten")</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo("/patienten"))" />
+    <MudText Typo="Typo.h5">@(Id == null ? "Neuer Patient" : "Patient bearbeiten")</MudText>
+</MudStack>
+
+@if (_laden)
+{
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <EditForm Model="@_patient" OnValidSubmit="Speichern">
+        <DataAnnotationsValidator />
+
+        <MudGrid Spacing="3">
+            <!-- Stammdaten -->
+            <MudItem xs="12">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />Stammdaten
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="3">
+                                <MudSelect T="string" @bind-Value="_patient.Anrede" Label="Anrede" Variant="Variant.Outlined">
+                                    <MudSelectItem Value="@("")">–</MudSelectItem>
+                                    <MudSelectItem Value="@("Frau")">Frau</MudSelectItem>
+                                    <MudSelectItem Value="@("Herr")">Herr</MudSelectItem>
+                                    <MudSelectItem Value="@("Divers")">Divers</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField @bind-Value="_patient.Vorname" Label="Vorname" Required="true"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="5">
+                                <MudTextField @bind-Value="_patient.Nachname" Label="Nachname" Required="true"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudDatePicker @bind-Date="_geburtsdatum" Label="Geburtsdatum"
+                                               Variant="Variant.Outlined" DateFormat="dd.MM.yyyy" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField @bind-Value="_patient.Beruf" Label="Beruf"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Kontakt -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1">
+                                <MudIcon Icon="@Icons.Material.Filled.ContactPhone" Class="mr-2" />Kontakt
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_patient.Strasse" Label="Straße und Nr." Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudTextField @bind-Value="_patient.Plz" Label="PLZ" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="8">
+                                <MudTextField @bind-Value="_patient.Ort" Label="Ort" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Telefon" Label="Telefon"
+                                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Phone"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Email" Label="E-Mail"
+                                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Notfallkontakt" Label="Notfallkontakt"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Notfalltelefon" Label="Notfalltelefon"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Versicherung -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1">
+                                <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Class="mr-2" />Versicherung
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12">
+                                <MudSelect T="string" @bind-Value="_patient.Versicherungsart" Label="Versicherungsart"
+                                           Variant="Variant.Outlined" Required="true">
+                                    <MudSelectItem Value="@("Selbstzahler")">Selbstzahler</MudSelectItem>
+                                    <MudSelectItem Value="@("GKV")">GKV – Gesetzliche Krankenversicherung</MudSelectItem>
+                                    <MudSelectItem Value="@("PKV")">PKV – Private Krankenversicherung</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_patient.Krankenkasse" Label="Krankenkasse"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_patient.Versicherungsnr" Label="Versicherungsnummer"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Anamnese -->
+            <MudItem xs="12">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1">
+                                <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="mr-2" />Anamnese
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_patient.Anamnese" Label="Anamnese / Krankengeschichte"
+                                              Lines="4" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Allergien" Label="Allergien / Unverträglichkeiten"
+                                              Lines="3" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_patient.Dauermedikamente" Label="Dauermedikamente"
+                                              Lines="3" Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Buttons -->
+            <MudItem xs="12">
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton Variant="Variant.Outlined" OnClick="@(() => Nav.NavigateTo("/patienten"))">Abbrechen</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.Save" Disabled="@_speichern">
+                        @(_speichern ? "Wird gespeichert..." : "Speichern")
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private Patient _patient = new();
+    private DateTime? _geburtsdatum;
+    private bool _laden = true;
+    private bool _speichern;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _laden = true;
+        if (Id.HasValue)
+        {
+            var p = await PatientenSvc.GetPatientAsync(Id.Value);
+            if (p is not null)
+            {
+                _patient = p;
+                _geburtsdatum = p.Geburtsdatum.HasValue
+                    ? new DateTime(p.Geburtsdatum.Value.Year, p.Geburtsdatum.Value.Month, p.Geburtsdatum.Value.Day)
+                    : null;
+            }
+        }
+        _laden = false;
+    }
+
+    private async Task Speichern()
+    {
+        _speichern = true;
+        _patient.Geburtsdatum = _geburtsdatum.HasValue ? DateOnly.FromDateTime(_geburtsdatum.Value) : null;
+        await PatientenSvc.SpeichernAsync(_patient);
+        Snackbar.Add("Patient gespeichert!", Severity.Success);
+        Nav.NavigateTo("/patienten");
+    }
+}

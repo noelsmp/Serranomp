@@ -1,0 +1,173 @@
+@page "/"
+@inject PatientenService PatientenSvc
+@inject TerminService TerminSvc
+@inject RechnungsService RechnungsSvc
+
+<PageTitle>Dashboard – Heilpraktiker Praxis</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-1">Dashboard</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-5">
+    Willkommen – @DateTime.Now.ToString("dddd, dd. MMMM yyyy", new System.Globalization.CultureInfo("de-DE"))
+</MudText>
+
+<!-- Statistik-Kacheln -->
+<MudGrid Spacing="3" Class="mb-6">
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent Class="d-flex align-items-center">
+                <MudAvatar Color="Color.Success" Size="Size.Large" Class="mr-4">
+                    <MudIcon Icon="@Icons.Material.Filled.People" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h4" Color="Color.Success">@_anzahlPatienten</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Aktive Patienten</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent Class="d-flex align-items-center">
+                <MudAvatar Color="Color.Info" Size="Size.Large" Class="mr-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Today" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h4" Color="Color.Info">@_termineHeute</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Termine heute</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent Class="d-flex align-items-center">
+                <MudAvatar Color="Color.Warning" Size="Size.Large" Class="mr-4">
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h4" Color="Color.Warning">@_umsatzMonat.ToString("C0", new System.Globalization.CultureInfo("de-DE"))</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Umsatz (Monat)</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="2">
+            <MudCardContent Class="d-flex align-items-center">
+                <MudAvatar Color="Color.Error" Size="Size.Large" Class="mr-4">
+                    <MudIcon Icon="@Icons.Material.Filled.PendingActions" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h4" Color="Color.Error">@_offenBetrag.ToString("C0", new System.Globalization.CultureInfo("de-DE"))</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Offen</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<!-- Nächste Termine -->
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-2" />
+                        Nächste Termine
+                    </MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Href="/termine" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">
+                        Alle anzeigen
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent Class="pa-0">
+                @if (_naechsteTermine.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Class="ma-3">Keine bevorstehenden Termine</MudAlert>
+                }
+                else
+                {
+                    <MudList T="Termin" Dense="true">
+                        @foreach (var t in _naechsteTermine)
+                        {
+                            <MudListItem>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <div>
+                                        <MudText Typo="Typo.body2" Color="Color.Primary">
+                                            @t.Datum.ToString("dd.MM. HH:mm") Uhr
+                                        </MudText>
+                                        <MudText Typo="Typo.body2">@(t.Patient?.VollerName ?? "–")</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@t.Art</MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success">@t.DauerMinuten Min.</MudChip>
+                                </MudStack>
+                            </MudListItem>
+                            <MudDivider />
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Spa" Class="mr-2" />
+                        Schnellzugriff
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid Spacing="2">
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.PersonAdd" Href="/patienten/neu">
+                            Neuer Patient
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Info"
+                                   StartIcon="@Icons.Material.Filled.CalendarMonth" Href="/termine/neu">
+                            Neuer Termin
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true" Variant="Variant.Outlined" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.MedicalServices" Href="/behandlungen/neu">
+                            Neue Behandlung
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true" Variant="Variant.Outlined" Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Receipt" Href="/rechnungen/neu">
+                            Neue Rechnung
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private int _anzahlPatienten;
+    private int _termineHeute;
+    private decimal _umsatzMonat;
+    private decimal _offenBetrag;
+    private List<Termin> _naechsteTermine = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _anzahlPatienten = await PatientenSvc.AnzahlAktivAsync();
+        _termineHeute = await TerminSvc.HeuteAnzahlAsync();
+        _umsatzMonat = await RechnungsSvc.UmsatzMonatAsync();
+        _offenBetrag = await RechnungsSvc.OffenerBetragAsync();
+        _naechsteTermine = await TerminSvc.NaechsteTermineAsync(5);
+    }
+}

@@ -1,0 +1,128 @@
+@page "/patienten"
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Patienten</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <div>
+        <MudText Typo="Typo.h5">Patienten</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@_patienten.Count Einträge</MudText>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Success"
+               StartIcon="@Icons.Material.Filled.PersonAdd"
+               OnClick="@(() => Nav.NavigateTo("/patienten/neu"))">
+        Neuer Patient
+    </MudButton>
+</MudStack>
+
+<MudCard Elevation="2">
+    <MudCardContent Class="pb-0">
+        <MudTextField @bind-Value="_suche" Placeholder="Suchen (Name, Patientennr.)..."
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true" Clearable="true" OnClearButtonClick="@ClearSearch"
+                      Class="mb-4" Variant="Variant.Outlined" />
+    </MudCardContent>
+
+    <MudTable T="Patient" Items="@GefiltertePatienten" Hover="true" Striped="true" Dense="true"
+              OnRowClick="@(args => Nav.NavigateTo($"/patienten/{args.Item.Id}"))"
+              RowClass="cursor-pointer" Loading="@_loading">
+        <HeaderContent>
+            <MudTh>Patientennr.</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Geburtsdatum</MudTh>
+            <MudTh>Telefon</MudTh>
+            <MudTh>Versicherung</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="p">
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="Color.Default">@p.PatientNr</MudChip>
+            </MudTd>
+            <MudTd>
+                <MudText Typo="Typo.body2">
+                    <b>@p.Nachname</b>, @p.Vorname
+                </MudText>
+            </MudTd>
+            <MudTd>@(p.Geburtsdatum?.ToString("dd.MM.yyyy") ?? "–") (@p.Alter)</MudTd>
+            <MudTd>@p.Telefon</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(p.Versicherungsart == "PKV" ? Color.Info : p.Versicherungsart == "GKV" ? Color.Default : Color.Warning)">
+                    @p.Versicherungsart
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true">
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="@(() => Nav.NavigateTo($"/patienten/{p.Id}/bearbeiten"))" />
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       OnClick="@(() => LoeschenBestaetigen(p))" />
+                    </div>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-4">Keine Patienten gefunden</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudCard>
+
+<!-- Löschen-Dialog -->
+<MudDialog @bind-Visible="_loeschenDialog">
+    <TitleContent><MudText Typo="Typo.h6">Patient archivieren?</MudText></TitleContent>
+    <DialogContent>
+        <MudText>Soll <b>@_loeschenPatient?.VollerName</b> archiviert werden?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _loeschenDialog = false)">Abbrechen</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="LoeschenBestaetigt">Archivieren</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Patient> _patienten = [];
+    private bool _loading = true;
+    private string _suche = "";
+    private bool _loeschenDialog;
+    private Patient? _loeschenPatient;
+
+    private IEnumerable<Patient> GefiltertePatienten => string.IsNullOrWhiteSpace(_suche)
+        ? _patienten
+        : _patienten.Where(p =>
+            p.Nachname.Contains(_suche, StringComparison.OrdinalIgnoreCase) ||
+            p.Vorname.Contains(_suche, StringComparison.OrdinalIgnoreCase) ||
+            p.PatientNr.Contains(_suche, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync() => await Laden();
+
+    private async Task Laden()
+    {
+        _loading = true;
+        _patienten = await PatientenSvc.AllePatientenAsync();
+        _loading = false;
+    }
+
+    private async Task ClearSearch()
+    {
+        _suche = "";
+        await Laden();
+    }
+
+    private void LoeschenBestaetigen(Patient p) { _loeschenPatient = p; _loeschenDialog = true; }
+
+    private async Task LoeschenBestaetigt()
+    {
+        if (_loeschenPatient is not null)
+        {
+            await PatientenSvc.LoeschenAsync(_loeschenPatient.Id);
+            Snackbar.Add($"{_loeschenPatient.VollerName} wurde archiviert.", Severity.Success);
+            _loeschenDialog = false;
+            await Laden();
+        }
+    }
+}

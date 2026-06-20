@@ -1,0 +1,242 @@
+@page "/behandlungen"
+@page "/behandlungen/neu"
+@inject BehandlungsService BehandlungsSvc
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Behandlungsdokumentation</PageTitle>
+
+@if (_showForm)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="FormSchliessen" />
+        <MudText Typo="Typo.h5">Behandlung dokumentieren</MudText>
+    </MudStack>
+
+    <MudCard Elevation="2" Style="max-width:800px">
+        <MudCardContent>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudAutocomplete T="Patient" @bind-Value="_formPatient" Label="Patient *" Required="true"
+                                     SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                                     Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_formDatum" Label="Datum" Required="true"
+                                   Variant="Variant.Outlined" DateFormat="dd.MM.yyyy" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_formBehandlung.Therapeut" Label="Therapeut"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_formBehandlung.Diagnose" Label="Diagnose / ICD-10" Required="true"
+                                  Variant="Variant.Outlined" Lines="2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_formBehandlung.Befund" Label="Befund / Untersuchungsergebnis"
+                                  Variant="Variant.Outlined" Lines="3" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_formBehandlung.Therapie" Label="Durchgeführte Therapie" Required="true"
+                                  Variant="Variant.Outlined" Lines="3" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_formBehandlung.Verlauf" Label="Verlauf / Reaktion des Patienten"
+                                  Variant="Variant.Outlined" Lines="3" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_formBehandlung.Medikamente" Label="Verordnete Mittel / Medikamente"
+                                  Variant="Variant.Outlined" Lines="2" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_formBehandlung.NaechsteSchritte" Label="Nächste Schritte / Empfehlungen"
+                                  Variant="Variant.Outlined" Lines="2" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions Class="pa-4">
+            <MudStack Row="true" Justify="Justify.FlexEnd" FullWidth="true">
+                <MudButton Variant="Variant.Outlined" OnClick="FormSchliessen">Abbrechen</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save"
+                           OnClick="Speichern" Disabled="@(_formPatient is null)">
+                    Speichern
+                </MudButton>
+            </MudStack>
+        </MudCardActions>
+    </MudCard>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudText Typo="Typo.h5">Behandlungsdokumentation</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Add" OnClick="FormOeffnen">
+            Neue Behandlung
+        </MudButton>
+    </MudStack>
+
+    <MudCard Elevation="2">
+        <MudCardContent Class="pb-0">
+            <MudAutocomplete T="Patient" Value="_filterPatient" Label="Nach Patient filtern"
+                             SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                             Variant="Variant.Outlined" Style="max-width:300px" Class="mb-4"
+                             ValueChanged="@FilterPatient" Clearable="true" />
+        </MudCardContent>
+        <MudTable Items="@_behandlungen" Dense="true" Hover="true" Loading="@_laden">
+            <HeaderContent>
+                <MudTh>Datum</MudTh>
+                <MudTh>Patient</MudTh>
+                <MudTh>Diagnose</MudTh>
+                <MudTh>Therapie</MudTh>
+                <MudTh>Therapeut</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate Context="b">
+                <MudTd>@b.Datum.ToString("dd.MM.yyyy")</MudTd>
+                <MudTd>@(b.Patient?.VollerName ?? "–")</MudTd>
+                <MudTd Style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@b.Diagnose</MudTd>
+                <MudTd Style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@b.Therapie</MudTd>
+                <MudTd>@b.Therapeut</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                   OnClick="@(() => DetailAnzeigen(b))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                   OnClick="@(() => LoeschenAsync(b.Id))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudCard>
+
+    <!-- Detail-Dialog -->
+    <MudDialog @bind-Visible="_detailDialog" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Behandlung – @_detailBehandlung?.Datum.ToString("dd.MM.yyyy")</MudText>
+        </TitleContent>
+        <DialogContent>
+            @if (_detailBehandlung is not null)
+            {
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption">Patient</MudText>
+                        <MudText Typo="Typo.body2">@(_detailBehandlung.Patient?.VollerName ?? "–")</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption">Therapeut</MudText>
+                        <MudText Typo="Typo.body2">@_detailBehandlung.Therapeut</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption">Diagnose</MudText>
+                        <MudText Typo="Typo.body2">@_detailBehandlung.Diagnose</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption">Befund</MudText>
+                        <MudText Typo="Typo.body2">@_detailBehandlung.Befund</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption">Therapie</MudText>
+                        <MudText Typo="Typo.body2">@_detailBehandlung.Therapie</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption">Verlauf</MudText>
+                        <MudText Typo="Typo.body2">@_detailBehandlung.Verlauf</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(_detailBehandlung.Medikamente))
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption">Medikamente / Mittel</MudText>
+                            <MudText Typo="Typo.body2">@_detailBehandlung.Medikamente</MudText>
+                        </MudItem>
+                    }
+                    @if (!string.IsNullOrEmpty(_detailBehandlung.NaechsteSchritte))
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption">Nächste Schritte</MudText>
+                            <MudText Typo="Typo.body2">@_detailBehandlung.NaechsteSchritte</MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => _detailDialog = false)">Schließen</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private List<Behandlung> _behandlungen = [];
+    private bool _laden = true;
+    private bool _showForm;
+    private bool _detailDialog;
+    private Behandlung? _detailBehandlung;
+    private Patient? _filterPatient;
+    private List<Patient> _allePatienten = [];
+
+    private Behandlung _formBehandlung = new();
+    private Patient? _formPatient;
+    private DateTime? _formDatum = DateTime.Today;
+
+    [SupplyParameterFromQuery] public int? PatientId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allePatienten = await PatientenSvc.AllePatientenAsync();
+        if (PatientId.HasValue)
+        {
+            _formPatient = _allePatienten.FirstOrDefault(p => p.Id == PatientId.Value);
+            _showForm = true;
+        }
+        await Laden();
+    }
+
+    private async Task Laden(int? patientId = null)
+    {
+        _laden = true;
+        _behandlungen = await BehandlungsSvc.AlleBehandlungenAsync(patientId);
+        _laden = false;
+    }
+
+    private async Task FilterPatient(Patient? p)
+    {
+        _filterPatient = p;
+        await Laden(p?.Id);
+    }
+
+    private async Task<IEnumerable<Patient>> PatientenSuche(string? val, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(val)) return _allePatienten;
+        return _allePatienten.Where(p => p.VollerName.Contains(val, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void FormOeffnen() { _formBehandlung = new(); _formPatient = null; _showForm = true; }
+    private void FormSchliessen() { _showForm = false; Nav.NavigateTo("/behandlungen"); }
+
+    private async Task Speichern()
+    {
+        if (_formPatient is null) return;
+        _formBehandlung.PatientId = _formPatient.Id;
+        _formBehandlung.Datum = _formDatum.HasValue ? DateOnly.FromDateTime(_formDatum.Value) : DateOnly.FromDateTime(DateTime.Today);
+        await BehandlungsSvc.SpeichernAsync(_formBehandlung);
+        Snackbar.Add("Behandlung dokumentiert!", Severity.Success);
+        _showForm = false;
+        await Laden();
+    }
+
+    private async Task LoeschenAsync(int id)
+    {
+        await BehandlungsSvc.LoeschenAsync(id);
+        Snackbar.Add("Behandlung gelöscht.", Severity.Info);
+        await Laden();
+    }
+
+    private async Task DetailAnzeigen(Behandlung b)
+    {
+        _detailBehandlung = await BehandlungsSvc.GetBehandlungAsync(b.Id);
+        // Attach patient
+        if (_detailBehandlung != null)
+            _detailBehandlung.Patient = _allePatienten.FirstOrDefault(p => p.Id == _detailBehandlung.PatientId);
+        _detailDialog = true;
+    }
+}

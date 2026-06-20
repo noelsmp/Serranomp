@@ -1,0 +1,108 @@
+is_global = true
+build_property.MudDebugAnalyzer = 
+build_property.MudAllowedAttributePattern = 
+build_property.MudAllowedAttributeList = 
+build_property.TargetFramework = net9.0
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = HeilpraktikerPraxis
+build_property.RootNamespace = HeilpraktikerPraxis
+build_property.ProjectDir = /home/user/Serranomp/HeilpraktikerPraxis/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /home/user/Serranomp/HeilpraktikerPraxis
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Behandlungen/BehandlungsListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CZWhhbmRsdW5nZW4vQmVoYW5kbHVuZ3NMaXN0ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Db3VudGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Dokumente/DokumentListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Eb2t1bWVudGUvRG9rdW1lbnRMaXN0ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Einstellungen/Einstellungen.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9FaW5zdGVsbHVuZ2VuL0VpbnN0ZWxsdW5nZW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Error.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9FcnJvci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ib21lLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Patienten/PatientDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9QYXRpZW50ZW4vUGF0aWVudERldGFpbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Patienten/PatientenListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9QYXRpZW50ZW4vUGF0aWVudGVuTGlzdGUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Patienten/PatientFormular.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9QYXRpZW50ZW4vUGF0aWVudEZvcm11bGFyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Rechnungen/RechnungFormular.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9SZWNobnVuZ2VuL1JlY2hudW5nRm9ybXVsYXIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Rechnungen/RechnungsListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9SZWNobnVuZ2VuL1JlY2hudW5nc0xpc3RlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Termine/TerminFormular.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UZXJtaW5lL1Rlcm1pbkZvcm11bGFyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Termine/TerminListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UZXJtaW5lL1Rlcm1pbkxpc3RlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Pages/Weather.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9XZWF0aGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9Sb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9fSW1wb3J0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTWFpbkxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-zra33zaz6a
+
+[/home/user/Serranomp/HeilpraktikerPraxis/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTmF2TWVudS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-1l74pyndmk

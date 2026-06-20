@@ -1,0 +1,249 @@
+@page "/rechnungen"
+@inject RechnungsService RechnungsSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject EmailService EmailSvc
+
+<PageTitle>Rechnungen</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <div>
+        <MudText Typo="Typo.h5">Rechnungen (ZUGFeRD)</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            GebüH-Abrechnung · ZUGFeRD 2.x / EN 16931 / Factur-X
+        </MudText>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Warning"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Nav.NavigateTo("/rechnungen/neu"))">
+        Neue Rechnung
+    </MudButton>
+</MudStack>
+
+<!-- Filter -->
+<MudCard Elevation="2" Class="mb-4">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+            <MudTextField @bind-Value="_suche" Placeholder="Suchen..." Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined" Style="max-width:300px" />
+            <MudChipSet T="string" SelectedValue="_statusFilter" SelectedValueChanged="OnStatusFilterChanged"
+                        SelectionMode="SelectionMode.SingleSelection">
+                <MudChip T="string" Value="@("alle")">Alle</MudChip>
+                <MudChip T="string" Value="@("offen")" Color="Color.Warning">Offen</MudChip>
+                <MudChip T="string" Value="@("bezahlt")" Color="Color.Success">Bezahlt</MudChip>
+            </MudChipSet>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+<!-- Tabelle -->
+<MudCard Elevation="2">
+    <MudTable T="Rechnung" Items="@GefilterteRechnungen" Dense="true" Hover="true"
+              OnRowClick="@(args => Nav.NavigateTo($"/rechnungen/{args.Item.Id}"))">
+        <HeaderContent>
+            <MudTh>Rechnungsnr.</MudTh>
+            <MudTh>Patient</MudTh>
+            <MudTh>Datum</MudTh>
+            <MudTh>Fällig</MudTh>
+            <MudTh>Betrag</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="r">
+            <MudTd>
+                <MudText Typo="Typo.body2" Color="Color.Primary"><b>@r.Rechnungsnr</b></MudText>
+            </MudTd>
+            <MudTd>@(r.Patient?.VollerName ?? "–")</MudTd>
+            <MudTd>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</MudTd>
+            <MudTd Style="@(!r.Bezahlt && r.Faelligkeitsdatum < DateOnly.FromDateTime(DateTime.Today) ? "color:#ef4444;font-weight:bold;" : "")">
+                @r.Faelligkeitsdatum.ToString("dd.MM.yyyy")
+            </MudTd>
+            <MudTd><b>@r.Gesamtbetrag.ToString("C2", _deDE)</b></MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@(r.Bezahlt ? Color.Success : Color.Warning)">
+                    @(r.Bezahlt ? "Bezahlt" : "Offen")
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true">
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="PDF herunterladen">
+                            <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => PdfHerunterladen(r.Id))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="ZUGFeRD PDF (XML eingebettet)">
+                            <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Info"
+                                           OnClick="@(() => ZugferdHerunterladen(r.Id))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="Als bezahlt markieren">
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                           Disabled="@r.Bezahlt" OnClick="@(() => BezahltMarkieren(r))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="Per E-Mail senden">
+                            <MudIconButton Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => MailDialogOeffnen(r))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                       OnClick="@(() => Nav.NavigateTo($"/rechnungen/{r.Id}/bearbeiten"))" />
+                    </div>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <FooterContent>
+            <MudTd colspan="4"><b>Gesamt offen:</b></MudTd>
+            <MudTd>
+                <b>@GefilterteRechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag).ToString("C2", _deDE)</b>
+            </MudTd>
+        </FooterContent>
+    </MudTable>
+</MudCard>
+
+<!-- Bezahlt-Dialog -->
+<MudDialog @bind-Visible="_bezahltDialog">
+    <TitleContent><MudText Typo="Typo.h6">Als bezahlt markieren</MudText></TitleContent>
+    <DialogContent>
+        <MudSelect T="string" @bind-Value="_zahlungsart" Label="Zahlungsart" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+            <MudSelectItem Value="@("Überweisung")">Überweisung</MudSelectItem>
+            <MudSelectItem Value="@("EC-Karte")">EC-Karte</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _bezahltDialog = false)">Abbrechen</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="BezahltBestaetigt">Bestätigen</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Mail-Dialog -->
+<MudDialog @bind-Visible="_mailDialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Rechnung per E-Mail senden</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_mailFehler != null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3">@_mailFehler</MudAlert>
+        }
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Rechnung: <b>@_mailRechnung?.Rechnungsnr</b> · @_mailRechnung?.Gesamtbetrag.ToString("C2", _deDE)
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_mailEmpfaenger" Label="Empfänger E-Mail *" Required="true"
+                              Variant="Variant.Outlined" InputType="InputType.Email"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_mailNachricht" Label="Persönliche Nachricht (optional)"
+                              Lines="3" Variant="Variant.Outlined"
+                              Placeholder="z.B. Vielen Dank für Ihren Besuch..." />
+            </MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    PDF-Rechnung + ZUGFeRD XML werden als Anhang beigefügt.
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => { _mailDialog = false; _mailFehler = null; })">Abbrechen</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   Disabled="@(_mailSending || string.IsNullOrWhiteSpace(_mailEmpfaenger))"
+                   OnClick="MailSenden">
+            @(_mailSending ? "Wird gesendet..." : "Senden")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Rechnung> _rechnungen = [];
+    private string _suche = "";
+    private string _statusFilter = "alle";
+    private bool _bezahltDialog;
+    private string _zahlungsart = "Überweisung";
+    private Rechnung? _bezahltRechnung;
+
+    private bool _mailDialog;
+    private bool _mailSending;
+    private string? _mailFehler;
+    private string _mailEmpfaenger = "";
+    private string _mailNachricht = "";
+    private Rechnung? _mailRechnung;
+    private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
+
+    private IEnumerable<Rechnung> GefilterteRechnungen => _rechnungen
+        .Where(r => string.IsNullOrEmpty(_suche) ||
+                    r.Rechnungsnr.Contains(_suche, StringComparison.OrdinalIgnoreCase) ||
+                    (r.Patient?.VollerName.Contains(_suche, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(r => _statusFilter == "alle" || (_statusFilter == "bezahlt" && r.Bezahlt) || (_statusFilter == "offen" && !r.Bezahlt));
+
+    protected override async Task OnInitializedAsync() =>
+        _rechnungen = await RechnungsSvc.AlleRechnungenAsync();
+
+    private void OnStatusFilterChanged(string? val) => _statusFilter = val ?? "alle";
+
+    private async Task PdfHerunterladen(int id) =>
+        await JS.InvokeVoidAsync("open", $"/api/rechnung/{id}/pdf", "_blank");
+
+    private async Task ZugferdHerunterladen(int id) =>
+        await JS.InvokeVoidAsync("open", $"/api/rechnung/{id}/zugferd", "_blank");
+
+    private async Task MailDialogOeffnen(Rechnung r)
+    {
+        _mailRechnung = await RechnungsSvc.GetRechnungAsync(r.Id);
+        _mailEmpfaenger = _mailRechnung?.Patient?.Email ?? "";
+        _mailNachricht = "";
+        _mailFehler = null;
+        _mailDialog = true;
+    }
+
+    private async Task MailSenden()
+    {
+        if (_mailRechnung is null || string.IsNullOrWhiteSpace(_mailEmpfaenger)) return;
+        _mailSending = true;
+        _mailFehler = null;
+        try
+        {
+            await EmailSvc.SendRechnungAsync(_mailRechnung, _mailEmpfaenger, _mailNachricht);
+            Snackbar.Add($"Rechnung an {_mailEmpfaenger} gesendet!", Severity.Success);
+            _mailDialog = false;
+        }
+        catch (Exception ex)
+        {
+            _mailFehler = ex.Message;
+        }
+        finally
+        {
+            _mailSending = false;
+        }
+    }
+
+    private void BezahltMarkieren(Rechnung r) { _bezahltRechnung = r; _bezahltDialog = true; }
+
+    private async Task BezahltBestaetigt()
+    {
+        if (_bezahltRechnung is not null)
+        {
+            await RechnungsSvc.AlsBeahltMarkierenAsync(_bezahltRechnung.Id, _zahlungsart);
+            Snackbar.Add("Rechnung als bezahlt markiert.", Severity.Success);
+            _bezahltDialog = false;
+            _rechnungen = await RechnungsSvc.AlleRechnungenAsync();
+        }
+    }
+}

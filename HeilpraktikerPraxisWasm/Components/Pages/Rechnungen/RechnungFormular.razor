@@ -1,0 +1,298 @@
+@page "/rechnungen/neu"
+@page "/rechnungen/{Id:int}/bearbeiten"
+@inject RechnungsService RechnungsSvc
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(Id == null ? "Neue Rechnung" : "Rechnung bearbeiten")</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo("/rechnungen"))" />
+    <MudText Typo="Typo.h5">@(Id == null ? "Neue Rechnung (GebüH + ZUGFeRD)" : "Rechnung bearbeiten")</MudText>
+</MudStack>
+
+<MudGrid Spacing="3">
+    <!-- Linke Spalte: Kopfdaten -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent><MudText Typo="Typo.subtitle1">Rechnungsdaten</MudText></CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12">
+                        <MudAutocomplete T="Patient" @bind-Value="_patient" Label="Patient *" Required="true"
+                                         SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                                         Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudDatePicker @bind-Date="_ausstellungsdatum" Label="Ausstellungsdatum"
+                                       Variant="Variant.Outlined" DateFormat="dd.MM.yyyy" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudDatePicker @bind-Date="_faelligkeitsdatum" Label="Fälligkeitsdatum"
+                                       Variant="Variant.Outlined" DateFormat="dd.MM.yyyy" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_rechnung.Notizen" Label="Notizen / Verwendungszweck"
+                                      Lines="3" Variant="Variant.Outlined" />
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Summen -->
+        <MudCard Elevation="2" Class="mt-3">
+            <MudCardContent>
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2">Zwischensumme:</MudText>
+                        <MudText Typo="Typo.body2">@Zwischensumme.ToString("C2", _deDE)</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2">MwSt. (§ 4 Nr. 14 UStG befreit):</MudText>
+                        <MudText Typo="Typo.body2">0,00 €</MudText>
+                    </MudStack>
+                    <MudDivider />
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.subtitle1" Color="Color.Success"><b>Gesamtbetrag:</b></MudText>
+                        <MudText Typo="Typo.subtitle1" Color="Color.Success">
+                            <b>@Zwischensumme.ToString("C2", _deDE)</b>
+                        </MudText>
+                    </MudStack>
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                        Heilbehandlungen gem. § 4 Nr. 14 UStG umsatzsteuerbefreit.
+                    </MudAlert>
+                </MudStack>
+            </MudCardContent>
+            <MudCardActions Class="pa-3">
+                <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Save" OnClick="Speichern"
+                           Disabled="@(_patient is null || !_positionen.Any())">
+                    Rechnung speichern
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <!-- Rechte Spalte: Positionen -->
+    <MudItem xs="12" md="8">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.subtitle1">GebüH – Leistungspositionen</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Wählen Sie Positionen aus dem Gebührenverzeichnis für Heilpraktiker
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <!-- GebüH-Auswahl -->
+                <MudGrid Spacing="2" Class="mb-4">
+                    <MudItem xs="12" sm="5">
+                        <MudSelect T="string" @bind-Value="_gewaehlteKategorie" Label="Kategorie"
+                                   Variant="Variant.Outlined" Dense="true">
+                            @foreach (var kat in GebueHService.Kategorien)
+                            {
+                                <MudSelectItem Value="@kat">@kat</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="7">
+                        <MudSelect T="GebueHPosition?" @bind-Value="_gewaehltePosition"
+                                   Label="Leistung" Variant="Variant.Outlined" Dense="true"
+                                   ToStringFunc="@(p => p != null ? $"{p.Ziffer} – {p.Leistung}" : "")">
+                            @foreach (var pos in GebueHService.NachKategorie(_gewaehlteKategorie))
+                            {
+                                <MudSelectItem T="GebueHPosition?" Value="@pos">
+                                    @pos.Ziffer – @pos.Leistung (@pos.Preis.ToString("C2", _deDE))
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" sm="3">
+                        <MudNumericField T="int" @bind-Value="_anzahl" Label="Anzahl" Min="1" Max="99"
+                                         Variant="Variant.Outlined" Dense="true" />
+                    </MudItem>
+                    <MudItem xs="6" sm="3">
+                        <MudNumericField T="decimal" @bind-Value="_einzelpreis" Label="Einzelpreis €"
+                                         Variant="Variant.Outlined" Dense="true" Format="F2" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="PositionHinzufuegen"
+                                   Disabled="@(_gewaehltePosition is null)">
+                            Position hinzufügen
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Manuelle Position -->
+                <MudExpansionPanel Text="Manuelle Position hinzufügen">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="3">
+                            <MudTextField @bind-Value="_manZiffer" Label="Ziffer" Variant="Variant.Outlined" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="9">
+                            <MudTextField @bind-Value="_manLeistung" Label="Leistungsbeschreibung"
+                                          Variant="Variant.Outlined" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudNumericField T="int" @bind-Value="_manAnzahl" Label="Anzahl" Min="1"
+                                             Variant="Variant.Outlined" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <MudNumericField T="decimal" @bind-Value="_manPreis" Label="Preis €"
+                                             Variant="Variant.Outlined" Dense="true" Format="F2" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Add" OnClick="ManuellePositionHinzufuegen">
+                                Manuell hinzufügen
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudExpansionPanel>
+
+                <!-- Positionen-Liste -->
+                @if (_positionen.Any())
+                {
+                    <MudDivider Class="my-3" />
+                    <MudTable T="RechnungsPosition" Items="@_positionen" Dense="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Ziffer</MudTh>
+                            <MudTh>Leistung</MudTh>
+                            <MudTh>Menge</MudTh>
+                            <MudTh>Einzelpr.</MudTh>
+                            <MudTh>Gesamt</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="p">
+                            <MudTd>@p.Ziffer</MudTd>
+                            <MudTd>@p.Leistung</MudTd>
+                            <MudTd>@p.Anzahl</MudTd>
+                            <MudTd>@p.Einzelpreis.ToString("C2", _deDE)</MudTd>
+                            <MudTd><b>@((p.Anzahl * p.Einzelpreis).ToString("C2", _deDE))</b></MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error" OnClick="@(() => PositionEntfernen(p))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-2">
+                        Noch keine Positionen. Bitte wählen Sie Leistungen aus dem GebüH.
+                    </MudAlert>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public int? PatientId { get; set; }
+
+    private Rechnung _rechnung = new();
+    private List<RechnungsPosition> _positionen = [];
+    private Patient? _patient;
+    private List<Patient> _allePatienten = [];
+    private DateTime? _ausstellungsdatum = DateTime.Today;
+    private DateTime? _faelligkeitsdatum = DateTime.Today.AddDays(14);
+
+    private string _gewaehlteKategorie = GebueHService.Kategorien.First();
+    private GebueHPosition? _gewaehltePosition;
+    private int _anzahl = 1;
+    private decimal _einzelpreis;
+
+    private string _manZiffer = "";
+    private string _manLeistung = "";
+    private int _manAnzahl = 1;
+    private decimal _manPreis;
+
+    private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
+    private decimal Zwischensumme => _positionen.Sum(p => p.Anzahl * p.Einzelpreis);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allePatienten = await PatientenSvc.AllePatientenAsync();
+
+        if (Id.HasValue)
+        {
+            var r = await RechnungsSvc.GetRechnungAsync(Id.Value);
+            if (r is not null)
+            {
+                _rechnung = r;
+                _positionen = r.Positionen.ToList();
+                _patient = r.Patient;
+                _ausstellungsdatum = r.Ausstellungsdatum.ToDateTime(TimeOnly.MinValue);
+                _faelligkeitsdatum = r.Faelligkeitsdatum.ToDateTime(TimeOnly.MinValue);
+            }
+        }
+        else if (PatientId.HasValue)
+        {
+            _patient = _allePatienten.FirstOrDefault(p => p.Id == PatientId.Value);
+        }
+    }
+
+    private async Task<IEnumerable<Patient>> PatientenSuche(string? val, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(val)) return _allePatienten;
+        return _allePatienten.Where(p =>
+            p.VollerName.Contains(val, StringComparison.OrdinalIgnoreCase) ||
+            p.PatientNr.Contains(val, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void PositionHinzufuegen()
+    {
+        if (_gewaehltePosition is null) return;
+        _positionen.Add(new RechnungsPosition
+        {
+            Ziffer = _gewaehltePosition.Ziffer,
+            Leistung = _gewaehltePosition.Leistung,
+            Einheit = _gewaehltePosition.Einheit,
+            Anzahl = _anzahl,
+            Einzelpreis = _einzelpreis > 0 ? _einzelpreis : _gewaehltePosition.Preis,
+        });
+        _anzahl = 1;
+        _einzelpreis = 0;
+        _gewaehltePosition = null;
+    }
+
+    private void ManuellePositionHinzufuegen()
+    {
+        if (string.IsNullOrWhiteSpace(_manLeistung)) return;
+        _positionen.Add(new RechnungsPosition
+        {
+            Ziffer = _manZiffer,
+            Leistung = _manLeistung,
+            Einheit = "je Leistung",
+            Anzahl = _manAnzahl,
+            Einzelpreis = _manPreis,
+        });
+        _manZiffer = _manLeistung = "";
+        _manAnzahl = 1;
+        _manPreis = 0;
+    }
+
+    private void PositionEntfernen(RechnungsPosition p) => _positionen.Remove(p);
+
+    private async Task Speichern()
+    {
+        if (_patient is null) return;
+        _rechnung.PatientId = _patient.Id;
+        _rechnung.Patient = _patient;
+        _rechnung.Positionen = _positionen;
+        _rechnung.MwstSatz = 0;
+        if (_ausstellungsdatum.HasValue)
+            _rechnung.Ausstellungsdatum = DateOnly.FromDateTime(_ausstellungsdatum.Value);
+        if (_faelligkeitsdatum.HasValue)
+            _rechnung.Faelligkeitsdatum = DateOnly.FromDateTime(_faelligkeitsdatum.Value);
+        await RechnungsSvc.SpeichernAsync(_rechnung);
+        Snackbar.Add("Rechnung gespeichert!", Severity.Success);
+        Nav.NavigateTo("/rechnungen");
+    }
+}

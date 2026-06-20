@@ -1,0 +1,63 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="@ToggleSidebar" />
+        <MudIcon Icon="@Icons.Material.Filled.LocalHospital" Class="ml-1 mr-2" />
+        <MudText Typo="Typo.h6">Heilpraktiker Praxis</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.body2" Class="mr-3 d-none d-sm-block">
+            @DateTime.Now.ToString("dddd, dd.MM.yyyy", new System.Globalization.CultureInfo("de-DE"))
+        </MudText>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_sidebarOpen" Elevation="2" Variant="DrawerVariant.Persistent"
+               Color="Color.Dark" Width="230px">
+        <MudDrawerHeader Class="pa-3">
+            <MudStack AlignItems="AlignItems.Center" Row="true">
+                <MudAvatar Color="Color.Success" Size="Size.Medium">
+                    <MudIcon Icon="@Icons.Material.Filled.Spa" />
+                </MudAvatar>
+                <MudText Color="Color.Surface" Typo="Typo.subtitle2" Class="ml-2">Praxisverwaltung</MudText>
+            </MudStack>
+        </MudDrawerHeader>
+        <MudDivider />
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-4 pa-sm-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _sidebarOpen = true;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#15803d",
+            PrimaryContrastText = "#ffffff",
+            Secondary = "#52b788",
+            Success = "#15803d",
+            Info = "#0ea5e9",
+            Warning = "#f59e0b",
+            Error = "#ef4444",
+            AppbarBackground = "#166534",
+            DrawerBackground = "#111827",
+            DrawerText = "#d1fae5",
+            DrawerIcon = "#6ee7b7",
+        }
+    };
+
+    private void ToggleSidebar() => _sidebarOpen = !_sidebarOpen;
+}
