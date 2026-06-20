@@ -12,10 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddMudServices();
 
-// SQLite Datenbank im lokalen AppData-Verzeichnis
-var dbDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeilpraktikerPraxis");
-Directory.CreateDirectory(dbDir);
-var dbPath = Path.Combine(dbDir, "praxis.db");
+// SQLite Datenbank: Umgebungsvariable DB_PATH (Container) oder lokales AppData
+var dbPath = Environment.GetEnvironmentVariable("DB_PATH")
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HeilpraktikerPraxis", "praxis.db");
+Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 builder.Services.AddDbContextFactory<PraxisDbContext>(opt => opt.UseSqlite($"Data Source={dbPath}"));
 
 // Services
