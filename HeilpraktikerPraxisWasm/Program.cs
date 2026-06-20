@@ -1,5 +1,6 @@
 using Blazored.LocalStorage;
 using HeilpraktikerPraxisWasm;
+using HeilpraktikerPraxisWasm.Components;
 using HeilpraktikerPraxisWasm.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
