@@ -1,0 +1,131 @@
+@page "/termine/neu"
+@page "/termine/{Id:int}"
+@page "/termine/{Id:int}/bearbeiten"
+@inject TerminService TerminSvc
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(Id == null ? "Neuer Termin" : "Termin bearbeiten")</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo("/termine"))" />
+    <MudText Typo="Typo.h5">@(Id == null ? "Neuer Termin" : "Termin bearbeiten")</MudText>
+</MudStack>
+
+<EditForm Model="@_termin" OnValidSubmit="Speichern">
+    <MudCard Elevation="2" Style="max-width:600px">
+        <MudCardContent>
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudAutocomplete T="Patient" @bind-Value="_patient" Label="Patient" Required="true"
+                                     SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                                     Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_datum" Label="Datum" Required="true"
+                                   Variant="Variant.Outlined" DateFormat="dd.MM.yyyy" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker @bind-Time="_uhrzeit" Label="Uhrzeit" Required="true"
+                                   Variant="Variant.Outlined" TimeFormat="HH:mm" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="int" @bind-Value="_termin.DauerMinuten" Label="Dauer" Variant="Variant.Outlined">
+                        <MudSelectItem Value="15">15 Minuten</MudSelectItem>
+                        <MudSelectItem Value="30">30 Minuten</MudSelectItem>
+                        <MudSelectItem Value="45">45 Minuten</MudSelectItem>
+                        <MudSelectItem Value="60">60 Minuten</MudSelectItem>
+                        <MudSelectItem Value="90">90 Minuten</MudSelectItem>
+                        <MudSelectItem Value="120">120 Minuten</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="TerminStatus" @bind-Value="_termin.Status" Label="Status" Variant="Variant.Outlined">
+                        <MudSelectItem Value="TerminStatus.Geplant">Geplant</MudSelectItem>
+                        <MudSelectItem Value="TerminStatus.Erschienen">Erschienen</MudSelectItem>
+                        <MudSelectItem Value="TerminStatus.Abgesagt">Abgesagt</MudSelectItem>
+                        <MudSelectItem Value="TerminStatus.NichtErschienen">Nicht erschienen</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_termin.Art" Label="Behandlungsart" Required="true"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="z.B. Akupunktur, Erstbehandlung, Kontrolle..." />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_termin.Notizen" Label="Notizen"
+                                  Lines="3" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions Class="pa-4">
+            <MudStack Row="true" Justify="Justify.FlexEnd" FullWidth="true">
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => Nav.NavigateTo("/termine"))">Abbrechen</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Save">
+                    Speichern
+                </MudButton>
+            </MudStack>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery] public int? PatientId { get; set; }
+    [SupplyParameterFromQuery] public string? Datum { get; set; }
+
+    private Termin _termin = new();
+    private Patient? _patient;
+    private DateTime? _datum;
+    private TimeSpan? _uhrzeit;
+    private List<Patient> _allePatienten = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allePatienten = await PatientenSvc.AllePatientenAsync();
+
+        if (Id.HasValue)
+        {
+            var t = await TerminSvc.GetTerminAsync(Id.Value);
+            if (t is not null)
+            {
+                _termin = t;
+                _patient = t.Patient;
+                _datum = t.Datum;
+                _uhrzeit = t.Datum.TimeOfDay;
+            }
+        }
+        else
+        {
+            if (PatientId.HasValue)
+                _patient = _allePatienten.FirstOrDefault(p => p.Id == PatientId.Value);
+
+            if (DateTime.TryParse(Datum, out var d))
+                _datum = d;
+            else
+                _datum = DateTime.Today;
+
+            _uhrzeit = new TimeSpan(9, 0, 0);
+        }
+    }
+
+    private async Task<IEnumerable<Patient>> PatientenSuche(string? val, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(val)) return _allePatienten;
+        return _allePatienten.Where(p =>
+            p.VollerName.Contains(val, StringComparison.OrdinalIgnoreCase) ||
+            p.PatientNr.Contains(val, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task Speichern()
+    {
+        if (_patient is null || _datum is null || _uhrzeit is null) return;
+        _termin.PatientId = _patient.Id;
+        _termin.Datum = _datum.Value.Date + _uhrzeit.Value;
+        await TerminSvc.SpeichernAsync(_termin);
+        Snackbar.Add("Termin gespeichert!", Severity.Success);
+        Nav.NavigateTo("/termine");
+    }
+}

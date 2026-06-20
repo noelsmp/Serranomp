@@ -1,0 +1,157 @@
+@page "/termine"
+@inject TerminService TerminSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Termine</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <MudText Typo="Typo.h5">Terminkalender</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Info"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Nav.NavigateTo("/termine/neu"))">
+        Neuer Termin
+    </MudButton>
+</MudStack>
+
+<!-- Kalender-Navigation -->
+<MudCard Elevation="2" Class="mb-4">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="VorherigeWoche" />
+            <MudText Typo="Typo.subtitle1">
+                @_wochenStart.ToString("dd.MM.") – @_wochenStart.AddDays(6).ToString("dd.MM.yyyy")
+            </MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NaechsteWoche" />
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="Heute">Heute</MudButton>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+<!-- Wochenansicht -->
+<MudGrid Spacing="2">
+    @for (int i = 0; i < 7; i++)
+    {
+        var tag = _wochenStart.AddDays(i);
+        var tagTermine = _termine.Where(t => t.Datum.Date == tag.Date).OrderBy(t => t.Datum).ToList();
+        var istHeute = tag.Date == DateTime.Today;
+
+        <MudItem xs="12" sm="6" md="12/7" lg="12/7">
+            <MudCard Elevation="@(istHeute ? 4 : 1)"
+                     Style="@(istHeute ? "border: 2px solid #15803d;" : "")">
+                <MudCardHeader Class="pb-1">
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.body2" Color="@(istHeute ? Color.Success : Color.Default)">
+                            <b>@tag.ToString("ddd", new System.Globalization.CultureInfo("de-DE"))</b>
+                        </MudText>
+                        <MudText Typo="Typo.h6" Color="@(istHeute ? Color.Success : Color.Default)">
+                            @tag.Day
+                        </MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small"
+                                       OnClick="@(() => Nav.NavigateTo($"/termine/neu?datum={tag:yyyy-MM-dd}"))" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="pa-2" Style="min-height:120px">
+                    @foreach (var t in tagTermine)
+                    {
+                        <MudPaper Class="pa-2 mb-1 cursor-pointer"
+                                  Style="@GetTerminStyle(t)"
+                                  @onclick="@(() => Nav.NavigateTo($"/termine/{t.Id}"))">
+                            <MudText Typo="Typo.caption"><b>@t.Datum.ToString("HH:mm")</b></MudText>
+                            <MudText Typo="Typo.caption">@(t.Patient?.VollerName ?? "–")</MudText>
+                            <MudText Typo="Typo.caption" Style="opacity:0.8">@t.Art</MudText>
+                        </MudPaper>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+<!-- Liste -->
+<MudCard Elevation="2" Class="mt-4">
+    <MudCardHeader>
+        <CardHeaderContent><MudText Typo="Typo.subtitle1">Alle Termine dieser Woche</MudText></CardHeaderContent>
+    </MudCardHeader>
+    <MudTable T="Termin" Items="@_termine" Dense="true" Hover="true"
+              OnRowClick="@(args => Nav.NavigateTo($"/termine/{args.Item.Id}"))">
+        <HeaderContent>
+            <MudTh>Datum & Zeit</MudTh>
+            <MudTh>Patient</MudTh>
+            <MudTh>Behandlungsart</MudTh>
+            <MudTh>Dauer</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="t">
+            <MudTd>@t.Datum.ToString("dd.MM.yyyy HH:mm")</MudTd>
+            <MudTd>@(t.Patient?.VollerName ?? "–")</MudTd>
+            <MudTd>@t.Art</MudTd>
+            <MudTd>@t.DauerMinuten Min.</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(t.Status)">
+                    @GetStatusText(t.Status)
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true">
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                       OnClick="@(() => Nav.NavigateTo($"/termine/{t.Id}/bearbeiten"))" />
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       OnClick="@(() => LoeschenAsync(t.Id))" />
+                    </div>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudCard>
+
+@code {
+    private List<Termin> _termine = [];
+    private DateTime _wochenStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + 1);
+
+    protected override async Task OnInitializedAsync() => await Laden();
+
+    private async Task Laden() =>
+        _termine = await TerminSvc.AlleTermineAsync(_wochenStart, _wochenStart.AddDays(7));
+
+    private async Task VorherigeWoche() { _wochenStart = _wochenStart.AddDays(-7); await Laden(); }
+    private async Task NaechsteWoche() { _wochenStart = _wochenStart.AddDays(7); await Laden(); }
+    private async Task Heute() { _wochenStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + 1); await Laden(); }
+
+    private async Task LoeschenAsync(int id)
+    {
+        await TerminSvc.LoeschenAsync(id);
+        Snackbar.Add("Termin gelöscht.", Severity.Success);
+        await Laden();
+    }
+
+    private static string GetTerminStyle(Termin t) => t.Status switch
+    {
+        TerminStatus.Erschienen => "background:#f0fdf4; border-left:3px solid #15803d;",
+        TerminStatus.Abgesagt => "background:#fef2f2; border-left:3px solid #ef4444; opacity:0.7;",
+        TerminStatus.NichtErschienen => "background:#fff7ed; border-left:3px solid #f59e0b;",
+        _ => "background:#eff6ff; border-left:3px solid #3b82f6;"
+    };
+
+    private static Color GetStatusColor(TerminStatus s) => s switch
+    {
+        TerminStatus.Erschienen => Color.Success,
+        TerminStatus.Abgesagt => Color.Error,
+        TerminStatus.NichtErschienen => Color.Warning,
+        _ => Color.Info
+    };
+
+    private static string GetStatusText(TerminStatus s) => s switch
+    {
+        TerminStatus.Erschienen => "Erschienen",
+        TerminStatus.Abgesagt => "Abgesagt",
+        TerminStatus.NichtErschienen => "Nicht erschienen",
+        _ => "Geplant"
+    };
+}
