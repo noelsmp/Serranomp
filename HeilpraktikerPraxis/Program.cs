@@ -40,6 +40,9 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 
+// HTTPS-Weiterleitung (für PWA / Service Worker auf iOS erforderlich)
+app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapStaticAssets();

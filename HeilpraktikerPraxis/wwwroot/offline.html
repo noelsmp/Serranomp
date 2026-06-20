@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Praxis – Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', system-ui, sans-serif;
+      background: #f8faf9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .icon {
+      width: 80px; height: 80px;
+      background: #f0fdf4;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .icon svg { width: 40px; height: 40px; color: #15803d; fill: none; stroke: #15803d; stroke-width: 2; }
+    h1 { font-size: 1.5rem; color: #111827; margin-bottom: 0.75rem; }
+    p { color: #6b7280; font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+    button {
+      background: #15803d;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #166534; }
+    .info {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #f0fdf4;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+      </svg>
+    </div>
+    <h1>Keine Verbindung</h1>
+    <p>
+      Die Praxis-App ist nicht erreichbar.<br>
+      Bitte stellen Sie sicher, dass Ihr Computer eingeschaltet ist und Sie mit dem Praxis-WLAN verbunden sind.
+    </p>
+    <button onclick="window.location.reload()">Erneut versuchen</button>
+    <div class="info">
+      💡 Tipp: Der Praxis-Server muss eingeschaltet und im gleichen Netzwerk sein.
+    </div>
+  </div>
+</body>
+</html>
