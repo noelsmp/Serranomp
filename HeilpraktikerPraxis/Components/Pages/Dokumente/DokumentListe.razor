@@ -42,11 +42,9 @@
                 </MudItem>
                 <MudItem xs="12">
                     <InputFile id="fileInput" OnChange="DateiGewaehlt" style="display:none" accept="*/*" />
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Upload"
-                               OnClick="@(() => JS.InvokeVoidAsync("document.getElementById('fileInput').click"))">
-                        Datei auswählen
-                    </MudButton>
+                    <label for="fileInput" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:8px 16px;border:1px solid #15803d;border-radius:4px;color:#15803d;font-size:14px;font-weight:500;background:white;">
+                        📎 Datei auswählen
+                    </label>
                     @if (_dateiName != null)
                     {
                         <MudText Typo="Typo.body2" Class="mt-2">

@@ -40,8 +40,9 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 
-// HTTPS-Weiterleitung (für PWA / Service Worker auf iOS erforderlich)
-app.UseHttpsRedirection();
+// HTTPS-Weiterleitung nur lokal (Render/Cloud macht SSL selbst via Reverse Proxy)
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();

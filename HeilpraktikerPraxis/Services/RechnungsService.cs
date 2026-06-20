@@ -47,6 +47,7 @@ public class RechnungsService(IDbContextFactory<PraxisDbContext> dbFactory)
         {
             rechnung.Rechnungsnr = await GenerateRechnungsNrAsync(db);
             rechnung.Erstellt = DateTime.Now;
+            rechnung.Patient = null; // nur FK verwenden, Navigation-Property nicht vom fremden Context übernehmen
             db.Rechnungen.Add(rechnung);
         }
         else
