@@ -1,4 +1,6 @@
 using HeilpraktikerPraxis.Models;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Filespec;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -7,6 +9,43 @@ namespace HeilpraktikerPraxis.Services;
 
 public class PdfService
 {
+    // Erzeugt ein ZUGFeRD-konformes PDF: QuestPDF-Dokument + eingebettete Factur-X XML
+    public byte[] GenerateZugferdRechnung(Rechnung rechnung, PraxisDaten praxis, string zugferdXml)
+    {
+        var pdfBytes = GenerateRechnung(rechnung, praxis);
+        var xmlBytes = System.Text.Encoding.UTF8.GetBytes(zugferdXml);
+        return EmbedZugferdXml(pdfBytes, xmlBytes);
+    }
+
+    private static byte[] EmbedZugferdXml(byte[] pdfBytes, byte[] xmlBytes)
+    {
+        using var input = new MemoryStream(pdfBytes);
+        using var output = new MemoryStream();
+
+        var reader = new PdfReader(input);
+        var writer = new PdfWriter(output);
+        using var doc = new PdfDocument(reader, writer);
+
+        var fileSpec = PdfFileSpec.CreateEmbeddedFileSpec(
+            doc,
+            xmlBytes,
+            "ZUGFeRD/Factur-X Rechnung",
+            "factur-x.xml",
+            new PdfName("text/xml"),
+            null,
+            PdfName.Alternative);
+
+        doc.AddFileAttachment("factur-x.xml", fileSpec);
+
+        // AF-Eintrag für PDF/A-3 Associated Files
+        var af = new PdfArray();
+        af.Add(fileSpec.GetPdfObject());
+        doc.GetCatalog().Put(new PdfName("AF"), af);
+
+        doc.Close();
+        return output.ToArray();
+    }
+
     public byte[] GenerateRechnung(Rechnung rechnung, PraxisDaten praxis)
     {
         QuestPDF.Settings.License = LicenseType.Community;

@@ -18,9 +18,8 @@ public class EmailService(PraxisService praxisSvc, PdfService pdfSvc, ZugferdSer
         if (string.IsNullOrWhiteSpace(praxis.SmtpPassword))
             throw new InvalidOperationException("SMTP-Passwort fehlt.");
 
-        var pdfBytes = pdfSvc.GenerateRechnung(rechnung, praxis);
         var xmlString = zugferdSvc.GenerateXml(rechnung, praxis);
-        var xmlBytes = System.Text.Encoding.UTF8.GetBytes(xmlString);
+        var zugferdPdfBytes = pdfSvc.GenerateZugferdRechnung(rechnung, praxis, xmlString);
 
         var mail = new MimeMessage();
         mail.From.Add(new MailboxAddress(praxis.Name, praxis.SmtpUsername));
@@ -32,23 +31,16 @@ public class EmailService(PraxisService praxisSvc, PdfService pdfSvc, ZugferdSer
             Text = BuildEmailText(rechnung, praxis, nachricht)
         };
 
+        // ZUGFeRD PDF: enthält die Factur-X XML eingebettet
         var pdf = new MimePart("application", "pdf")
         {
-            Content = new MimeContent(new MemoryStream(pdfBytes)),
+            Content = new MimeContent(new MemoryStream(zugferdPdfBytes)),
             ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
             ContentTransferEncoding = ContentEncoding.Base64,
-            FileName = $"{rechnung.Rechnungsnr}.pdf"
+            FileName = $"{rechnung.Rechnungsnr}_ZUGFeRD.pdf"
         };
 
-        var xml = new MimePart("application", "xml")
-        {
-            Content = new MimeContent(new MemoryStream(xmlBytes)),
-            ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
-            ContentTransferEncoding = ContentEncoding.Base64,
-            FileName = $"{rechnung.Rechnungsnr}_ZUGFeRD.xml"
-        };
-
-        mail.Body = new Multipart("mixed") { body, pdf, xml };
+        mail.Body = new Multipart("mixed") { body, pdf };
 
         using var smtp = new SmtpClient();
         var secureOption = praxis.SmtpSsl
@@ -72,7 +64,7 @@ public class EmailService(PraxisService praxisSvc, PdfService pdfSvc, ZugferdSer
 
 anbei erhalten Sie Ihre Rechnung {rechnung.Rechnungsnr} vom {rechnung.Ausstellungsdatum:dd.MM.yyyy} über {rechnung.Gesamtbetrag:F2} €.
 
-{(string.IsNullOrWhiteSpace(nachricht) ? "" : nachricht + "\n\n")}Die Rechnung liegt als PDF-Dokument bei. Zusätzlich ist die Rechnung im ZUGFeRD-Format (XML) beigefügt, das von Buchhaltungsprogrammen automatisch verarbeitet werden kann.
+{(string.IsNullOrWhiteSpace(nachricht) ? "" : nachricht + "\n\n")}Die Rechnung liegt als ZUGFeRD-PDF bei. Das Dokument enthält die Rechnungsdaten im Factur-X/ZUGFeRD-Format eingebettet und kann von Buchhaltungsprogrammen automatisch verarbeitet werden.
 
 Bitte überweisen Sie den Betrag bis zum {rechnung.Faelligkeitsdatum:dd.MM.yyyy} unter Angabe der Rechnungsnummer {rechnung.Rechnungsnr}.
 {(string.IsNullOrWhiteSpace(praxis.Iban) ? "" : $"IBAN: {praxis.Iban}{(string.IsNullOrWhiteSpace(praxis.Bic) ? "" : $"  BIC: {praxis.Bic}")}")}

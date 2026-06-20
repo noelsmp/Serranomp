@@ -78,8 +78,8 @@
                         </MudTooltip>
                     </div>
                     <div @onclick:stopPropagation>
-                        <MudTooltip Text="ZUGFeRD XML">
-                            <MudIconButton Icon="@Icons.Material.Filled.Code" Size="Size.Small" Color="Color.Info"
+                        <MudTooltip Text="ZUGFeRD PDF (XML eingebettet)">
+                            <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Info"
                                            OnClick="@(() => ZugferdHerunterladen(r.Id))" />
                         </MudTooltip>
                     </div>
@@ -217,9 +217,9 @@
         if (r is null) return;
         var praxis = await PraxisSvc.GetPraxisDatenAsync();
         var xml = ZugferdSvc.GenerateXml(r, praxis);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
-        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}_ZUGFeRD.xml", "application/xml", bytes);
-        Snackbar.Add("ZUGFeRD XML heruntergeladen", Severity.Info);
+        var pdfBytes = PdfSvc.GenerateZugferdRechnung(r, praxis, xml);
+        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}_ZUGFeRD.pdf", "application/pdf", pdfBytes);
+        Snackbar.Add("ZUGFeRD PDF heruntergeladen (XML eingebettet)", Severity.Info);
     }
 
     private async Task MailDialogOeffnen(Rechnung r)
