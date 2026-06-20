@@ -18,4 +18,11 @@ public class PraxisDaten
     public string? Bank { get; set; }
     public string? HeilpraktikerErlaubnis { get; set; } = "gem. § 1 HeilprG";
     public byte[]? Logo { get; set; }
+
+    // E-Mail / SMTP
+    public string? SmtpHost { get; set; }
+    public int SmtpPort { get; set; } = 587;
+    public string? SmtpUsername { get; set; }
+    public string? SmtpPassword { get; set; }
+    public bool SmtpSsl { get; set; } = true;
 }

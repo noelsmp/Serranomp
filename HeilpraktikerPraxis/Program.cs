@@ -27,6 +27,7 @@ builder.Services.AddScoped<DokumentService>();
 builder.Services.AddScoped<PraxisService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<ZugferdService>();
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 

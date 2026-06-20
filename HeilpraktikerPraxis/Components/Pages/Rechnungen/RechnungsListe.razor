@@ -6,6 +6,7 @@
 @inject PdfService PdfSvc
 @inject ZugferdService ZugferdSvc
 @inject PraxisService PraxisSvc
+@inject EmailService EmailSvc
 
 <PageTitle>Rechnungen</PageTitle>
 
@@ -89,6 +90,12 @@
                         </MudTooltip>
                     </div>
                     <div @onclick:stopPropagation>
+                        <MudTooltip Text="Per E-Mail senden">
+                            <MudIconButton Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => MailDialogOeffnen(r))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                        OnClick="@(() => Nav.NavigateTo($"/rechnungen/{r.Id}/bearbeiten"))" />
                     </div>
@@ -120,6 +127,53 @@
     </DialogActions>
 </MudDialog>
 
+<!-- Mail-Dialog -->
+<MudDialog @bind-Visible="_mailDialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Rechnung per E-Mail senden</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_mailFehler != null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3">@_mailFehler</MudAlert>
+        }
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Rechnung: <b>@_mailRechnung?.Rechnungsnr</b> · @_mailRechnung?.Gesamtbetrag.ToString("C2", _deDE)
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_mailEmpfaenger" Label="Empfänger E-Mail *" Required="true"
+                              Variant="Variant.Outlined" InputType="InputType.Email"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_mailNachricht" Label="Persönliche Nachricht (optional)"
+                              Lines="3" Variant="Variant.Outlined"
+                              Placeholder="z.B. Vielen Dank für Ihren Besuch..." />
+            </MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    PDF-Rechnung + ZUGFeRD XML werden als Anhang beigefügt.
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => { _mailDialog = false; _mailFehler = null; })">Abbrechen</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   Disabled="@(_mailSending || string.IsNullOrWhiteSpace(_mailEmpfaenger))"
+                   OnClick="MailSenden">
+            @(_mailSending ? "Wird gesendet..." : "Senden")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private List<Rechnung> _rechnungen = [];
     private string _suche = "";
@@ -127,6 +181,13 @@
     private bool _bezahltDialog;
     private string _zahlungsart = "Überweisung";
     private Rechnung? _bezahltRechnung;
+
+    private bool _mailDialog;
+    private bool _mailSending;
+    private string? _mailFehler;
+    private string _mailEmpfaenger = "";
+    private string _mailNachricht = "";
+    private Rechnung? _mailRechnung;
     private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
 
     private IEnumerable<Rechnung> GefilterteRechnungen => _rechnungen
@@ -159,6 +220,36 @@
         var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
         await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}_ZUGFeRD.xml", "application/xml", bytes);
         Snackbar.Add("ZUGFeRD XML heruntergeladen", Severity.Info);
+    }
+
+    private async Task MailDialogOeffnen(Rechnung r)
+    {
+        _mailRechnung = await RechnungsSvc.GetRechnungAsync(r.Id);
+        _mailEmpfaenger = _mailRechnung?.Patient?.Email ?? "";
+        _mailNachricht = "";
+        _mailFehler = null;
+        _mailDialog = true;
+    }
+
+    private async Task MailSenden()
+    {
+        if (_mailRechnung is null || string.IsNullOrWhiteSpace(_mailEmpfaenger)) return;
+        _mailSending = true;
+        _mailFehler = null;
+        try
+        {
+            await EmailSvc.SendRechnungAsync(_mailRechnung, _mailEmpfaenger, _mailNachricht);
+            Snackbar.Add($"Rechnung an {_mailEmpfaenger} gesendet!", Severity.Success);
+            _mailDialog = false;
+        }
+        catch (Exception ex)
+        {
+            _mailFehler = ex.Message;
+        }
+        finally
+        {
+            _mailSending = false;
+        }
     }
 
     private void BezahltMarkieren(Rechnung r) { _bezahltRechnung = r; _bezahltDialog = true; }
