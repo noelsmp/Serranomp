@@ -14,6 +14,7 @@ builder.Services.AddMudServices();
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<PraxisService>();
+builder.Services.AddScoped<PinService>();
 builder.Services.AddScoped<PatientenService>();
 builder.Services.AddScoped<TerminService>();
 builder.Services.AddScoped<RechnungsService>();

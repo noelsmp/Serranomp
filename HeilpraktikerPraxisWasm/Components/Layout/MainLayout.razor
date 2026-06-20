@@ -1,34 +1,58 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject TestdatenSeeder Seeder
+@inject PinService PinSvc
 
 <MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Dark" Dense="true">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
-                       Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
-        <MudText Typo="Typo.h6" Class="ml-2">Praxis</MudText>
-        <MudSpacer />
-        <MudText Typo="Typo.body2" Class="mr-2" Style="opacity:0.7">
-            @DateTime.Now.ToString("dddd, dd. MMMM yyyy", new System.Globalization.CultureInfo("de-DE"))
-        </MudText>
-    </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <NavMenu />
-    </MudDrawer>
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+@if (_laden)
+{
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:1rem;background:#111827;">
+        <div style="width:60px;height:60px;background:#15803d;border-radius:16px;display:flex;align-items:center;justify-content:center;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <MudProgressCircular Indeterminate="true" Color="Color.Success" />
+    </div>
+}
+else if (_pinErforderlich)
+{
+    <PinScreen OnUnlocked="PinEntsperrt" />
+}
+else
+{
+    <MudLayout>
+        <MudAppBar Elevation="1" Color="Color.Dark" Dense="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                           Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
+            <MudText Typo="Typo.h6" Class="ml-2">Praxis</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.body2" Class="mr-2" Style="opacity:0.7">
+                @DateTime.Now.ToString("dddd, dd. MMMM yyyy", new System.Globalization.CultureInfo("de-DE"))
+            </MudText>
+            <MudTooltip Text="Sperren">
+                <MudIconButton Icon="@Icons.Material.Filled.Lock" Color="Color.Inherit"
+                               OnClick="Sperren" />
+            </MudTooltip>
+        </MudAppBar>
+        <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+            <NavMenu />
+        </MudDrawer>
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
 
 @code {
     private bool _drawerOpen = true;
+    private bool _laden = true;
+    private bool _pinErforderlich;
+
     private readonly MudTheme _theme = new()
     {
         PaletteLight = new PaletteLight
@@ -43,5 +67,21 @@
     protected override async Task OnInitializedAsync()
     {
         await Seeder.SeedIfEmptyAsync();
+        var pinGesetzt = await PinSvc.IsPinSetAsync();
+        _pinErforderlich = pinGesetzt && !PinSvc.IsUnlocked;
+        _laden = false;
+    }
+
+    private void PinEntsperrt()
+    {
+        _pinErforderlich = false;
+        StateHasChanged();
+    }
+
+    private void Sperren()
+    {
+        PinSvc.Lock();
+        _pinErforderlich = true;
+        StateHasChanged();
     }
 }

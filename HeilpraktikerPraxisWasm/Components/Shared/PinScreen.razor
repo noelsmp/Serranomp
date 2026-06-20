@@ -1,0 +1,124 @@
+@inject PinService PinSvc
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<div style="position:fixed;inset:0;background:#111827;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:2rem;">
+
+    <!-- Logo -->
+    <div style="width:72px;height:72px;background:#15803d;border-radius:20px;display:flex;align-items:center;justify-content:center;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+    </div>
+
+    <div style="text-align:center;">
+        <div style="color:#f9fafb;font-size:1.4rem;font-weight:600;font-family:sans-serif;">Naturheilpraxis</div>
+        <div style="color:#9ca3af;font-size:0.85rem;margin-top:4px;font-family:sans-serif;">
+            @if (_lockSeconds > 0)
+            {
+                <span style="color:#f87171;">Gesperrt – bitte warten (@_lockSeconds s)</span>
+            }
+            else if (_fehler)
+            {
+                <span style="color:#f87171;">Falscher PIN (@_versuche. Versuch)</span>
+            }
+            else
+            {
+                <span>PIN eingeben</span>
+            }
+        </div>
+    </div>
+
+    <!-- PIN-Punkte -->
+    <div style="display:flex;gap:16px;">
+        @for (int i = 0; i < 4; i++)
+        {
+            var filled = i < _pin.Length;
+            <div style="width:14px;height:14px;border-radius:50%;border:2px solid #15803d;background:@(filled ? "#15803d" : "transparent");"></div>
+        }
+    </div>
+
+    <!-- Nummernpad -->
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px;">
+        @foreach (var d in new[] { "1","2","3","4","5","6","7","8","9","","0","⌫" })
+        {
+            if (d == "")
+            {
+                <div></div>
+            }
+            else
+            {
+                var digit = d;
+                <button @onclick="@(() => TippeZiffer(digit))"
+                        disabled="@(_lockSeconds > 0)"
+                        style="width:72px;height:72px;border-radius:50%;border:none;background:#1f2937;color:#f9fafb;font-size:1.5rem;font-weight:500;cursor:pointer;font-family:sans-serif;transition:background 0.1s;"
+                        @onmousedown="@(() => {})"
+                        onmouseover="this.style.background='#374151'"
+                        onmouseout="this.style.background='#1f2937'">
+                    @digit
+                </button>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnUnlocked { get; set; }
+
+    private string _pin = "";
+    private bool _fehler;
+    private int _versuche;
+    private int _lockSeconds;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _lockSeconds = await PinSvc.RemainingLockSecondsAsync();
+        if (_lockSeconds > 0) StartCountdown();
+    }
+
+    private async Task TippeZiffer(string d)
+    {
+        if (_lockSeconds > 0) return;
+
+        if (d == "⌫")
+        {
+            if (_pin.Length > 0) _pin = _pin[..^1];
+            _fehler = false;
+            return;
+        }
+
+        if (_pin.Length >= 4) return;
+        _pin += d;
+
+        if (_pin.Length == 4)
+        {
+            var (ok, secs, attempts) = await PinSvc.VerifyAsync(_pin);
+            _pin = "";
+            if (ok)
+            {
+                await OnUnlocked.InvokeAsync();
+            }
+            else
+            {
+                _fehler = true;
+                _versuche = attempts;
+                _lockSeconds = secs;
+                if (_lockSeconds > 0) StartCountdown();
+            }
+        }
+    }
+
+    private void StartCountdown()
+    {
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(_ =>
+        {
+            if (_lockSeconds > 0) _lockSeconds--;
+            else { _timer?.Dispose(); _fehler = false; }
+            InvokeAsync(StateHasChanged);
+        }, null, 1000, 1000);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}
