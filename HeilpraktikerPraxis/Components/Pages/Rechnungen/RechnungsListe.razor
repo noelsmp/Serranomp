@@ -3,9 +3,6 @@
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
-@inject PdfService PdfSvc
-@inject ZugferdService ZugferdSvc
-@inject PraxisService PraxisSvc
 @inject EmailService EmailSvc
 
 <PageTitle>Rechnungen</PageTitle>
@@ -201,26 +198,11 @@
 
     private void OnStatusFilterChanged(string? val) => _statusFilter = val ?? "alle";
 
-    private async Task PdfHerunterladen(int id)
-    {
-        var r = await RechnungsSvc.GetRechnungAsync(id);
-        if (r is null) return;
-        var praxis = await PraxisSvc.GetPraxisDatenAsync();
-        var pdfBytes = PdfSvc.GenerateRechnung(r, praxis);
-        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}.pdf", "application/pdf", pdfBytes);
-        Snackbar.Add("PDF heruntergeladen", Severity.Success);
-    }
+    private async Task PdfHerunterladen(int id) =>
+        await JS.InvokeVoidAsync("open", $"/api/rechnung/{id}/pdf", "_blank");
 
-    private async Task ZugferdHerunterladen(int id)
-    {
-        var r = await RechnungsSvc.GetRechnungAsync(id);
-        if (r is null) return;
-        var praxis = await PraxisSvc.GetPraxisDatenAsync();
-        var xml = ZugferdSvc.GenerateXml(r, praxis);
-        var pdfBytes = PdfSvc.GenerateZugferdRechnung(r, praxis, xml);
-        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}_ZUGFeRD.pdf", "application/pdf", pdfBytes);
-        Snackbar.Add("ZUGFeRD PDF heruntergeladen (XML eingebettet)", Severity.Info);
-    }
+    private async Task ZugferdHerunterladen(int id) =>
+        await JS.InvokeVoidAsync("open", $"/api/rechnung/{id}/zugferd", "_blank");
 
     private async Task MailDialogOeffnen(Rechnung r)
     {

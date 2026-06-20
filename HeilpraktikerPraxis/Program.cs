@@ -51,4 +51,26 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
+// PDF-Download-Endpunkte (direkte HTTP-URLs – funktioniert auf iOS Safari)
+app.MapGet("/api/rechnung/{id}/pdf", async (
+    int id, RechnungsService rechnungsSvc, PdfService pdfSvc, PraxisService praxisSvc) =>
+{
+    var r = await rechnungsSvc.GetRechnungAsync(id);
+    if (r is null) return Results.NotFound();
+    var praxis = await praxisSvc.GetPraxisDatenAsync();
+    var pdf = pdfSvc.GenerateRechnung(r, praxis);
+    return Results.File(pdf, "application/pdf", $"{r.Rechnungsnr}.pdf");
+});
+
+app.MapGet("/api/rechnung/{id}/zugferd", async (
+    int id, RechnungsService rechnungsSvc, PdfService pdfSvc, ZugferdService zugferdSvc, PraxisService praxisSvc) =>
+{
+    var r = await rechnungsSvc.GetRechnungAsync(id);
+    if (r is null) return Results.NotFound();
+    var praxis = await praxisSvc.GetPraxisDatenAsync();
+    var xml = zugferdSvc.GenerateXml(r, praxis);
+    var pdf = pdfSvc.GenerateZugferdRechnung(r, praxis, xml);
+    return Results.File(pdf, "application/pdf", $"{r.Rechnungsnr}_ZUGFeRD.pdf");
+});
+
 app.Run();
