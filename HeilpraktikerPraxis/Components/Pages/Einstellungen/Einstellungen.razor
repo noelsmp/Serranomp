@@ -1,0 +1,161 @@
+@page "/einstellungen"
+@inject PraxisService PraxisSvc
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Einstellungen</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Praxis-Einstellungen</MudText>
+
+@if (_laden)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        <!-- Praxisdaten -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1">
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-2" />Praxisdaten
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Name" Label="Praxisname" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Inhaberin" Label="Inhaberin (Name)" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Strasse" Label="Straße und Nr." Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudTextField @bind-Value="_daten.Plz" Label="PLZ" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="8">
+                            <MudTextField @bind-Value="_daten.Ort" Label="Ort" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_daten.Telefon" Label="Telefon" Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Phone" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_daten.Email" Label="E-Mail" Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Webseite" Label="Webseite" Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Language" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.HeilpraktikerErlaubnis" Label="Heilpraktiker-Erlaubnis Hinweis"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Steuer & Bankdaten -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="mr-2" />Steuer & Bankdaten
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Steuernr" Label="Steuernummer" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.UstIdNr" Label="USt-IdNr. (falls vorhanden)" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudDivider Class="my-2" />
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Bank" Label="Bank" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Iban" Label="IBAN" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_daten.Bic" Label="BIC" Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                Heilbehandlungen sind gem. § 4 Nr. 14 UStG umsatzsteuerbefreit. Die Rechnung enthält keine MwSt.
+                            </MudAlert>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Logo -->
+            <MudCard Elevation="2" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1">Praxis-Logo</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_daten.Logo is not null)
+                    {
+                        <img src="data:image/*;base64,@Convert.ToBase64String(_daten.Logo)"
+                             style="max-height:80px; max-width:200px;" class="mb-2" alt="Logo" />
+                    }
+                    <InputFile id="logoInput" OnChange="LogoGewaehlt" style="display:none" accept="image/*" />
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                               OnClick="@(() => JS.InvokeVoidAsync("document.getElementById('logoInput').click"))">
+                        Logo hochladen
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudButton Variant="Variant.Filled" Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Save" OnClick="Speichern"
+                           Disabled="@_speichern">
+                    @(_speichern ? "Wird gespeichert..." : "Einstellungen speichern")
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private PraxisDaten _daten = new();
+    private bool _laden = true;
+    private bool _speichern;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _daten = await PraxisSvc.GetPraxisDatenAsync();
+        _laden = false;
+    }
+
+    private async Task LogoGewaehlt(InputFileChangeEventArgs e)
+    {
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(2 * 1024 * 1024).CopyToAsync(ms);
+        _daten.Logo = ms.ToArray();
+    }
+
+    private async Task Speichern()
+    {
+        _speichern = true;
+        await PraxisSvc.SpeichernAsync(_daten);
+        Snackbar.Add("Einstellungen gespeichert!", Severity.Success);
+        _speichern = false;
+    }
+}

@@ -1,0 +1,176 @@
+@page "/rechnungen"
+@inject RechnungsService RechnungsSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject PdfService PdfSvc
+@inject ZugferdService ZugferdSvc
+@inject PraxisService PraxisSvc
+
+<PageTitle>Rechnungen</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <div>
+        <MudText Typo="Typo.h5">Rechnungen (ZUGFeRD)</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            GebüH-Abrechnung · ZUGFeRD 2.x / EN 16931 / Factur-X
+        </MudText>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Warning"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Nav.NavigateTo("/rechnungen/neu"))">
+        Neue Rechnung
+    </MudButton>
+</MudStack>
+
+<!-- Filter -->
+<MudCard Elevation="2" Class="mb-4">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+            <MudTextField @bind-Value="_suche" Placeholder="Suchen..." Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined" Style="max-width:300px" />
+            <MudChipSet T="string" SelectedValue="_statusFilter" SelectedValueChanged="OnStatusFilterChanged"
+                        SelectionMode="SelectionMode.SingleSelection">
+                <MudChip T="string" Value="@("alle")">Alle</MudChip>
+                <MudChip T="string" Value="@("offen")" Color="Color.Warning">Offen</MudChip>
+                <MudChip T="string" Value="@("bezahlt")" Color="Color.Success">Bezahlt</MudChip>
+            </MudChipSet>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+<!-- Tabelle -->
+<MudCard Elevation="2">
+    <MudTable T="Rechnung" Items="@GefilterteRechnungen" Dense="true" Hover="true"
+              OnRowClick="@(args => Nav.NavigateTo($"/rechnungen/{args.Item.Id}"))">
+        <HeaderContent>
+            <MudTh>Rechnungsnr.</MudTh>
+            <MudTh>Patient</MudTh>
+            <MudTh>Datum</MudTh>
+            <MudTh>Fällig</MudTh>
+            <MudTh>Betrag</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Aktionen</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="r">
+            <MudTd>
+                <MudText Typo="Typo.body2" Color="Color.Primary"><b>@r.Rechnungsnr</b></MudText>
+            </MudTd>
+            <MudTd>@(r.Patient?.VollerName ?? "–")</MudTd>
+            <MudTd>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</MudTd>
+            <MudTd Style="@(!r.Bezahlt && r.Faelligkeitsdatum < DateOnly.FromDateTime(DateTime.Today) ? "color:#ef4444;font-weight:bold;" : "")">
+                @r.Faelligkeitsdatum.ToString("dd.MM.yyyy")
+            </MudTd>
+            <MudTd><b>@r.Gesamtbetrag.ToString("C2", _deDE)</b></MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@(r.Bezahlt ? Color.Success : Color.Warning)">
+                    @(r.Bezahlt ? "Bezahlt" : "Offen")
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudStack Row="true">
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="PDF herunterladen">
+                            <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" Color="Color.Error"
+                                           OnClick="@(() => PdfHerunterladen(r.Id))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="ZUGFeRD XML">
+                            <MudIconButton Icon="@Icons.Material.Filled.Code" Size="Size.Small" Color="Color.Info"
+                                           OnClick="@(() => ZugferdHerunterladen(r.Id))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="Als bezahlt markieren">
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
+                                           Disabled="@r.Bezahlt" OnClick="@(() => BezahltMarkieren(r))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                       OnClick="@(() => Nav.NavigateTo($"/rechnungen/{r.Id}/bearbeiten"))" />
+                    </div>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <FooterContent>
+            <MudTd colspan="4"><b>Gesamt offen:</b></MudTd>
+            <MudTd>
+                <b>@GefilterteRechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag).ToString("C2", _deDE)</b>
+            </MudTd>
+        </FooterContent>
+    </MudTable>
+</MudCard>
+
+<!-- Bezahlt-Dialog -->
+<MudDialog @bind-Visible="_bezahltDialog">
+    <TitleContent><MudText Typo="Typo.h6">Als bezahlt markieren</MudText></TitleContent>
+    <DialogContent>
+        <MudSelect T="string" @bind-Value="_zahlungsart" Label="Zahlungsart" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+            <MudSelectItem Value="@("Überweisung")">Überweisung</MudSelectItem>
+            <MudSelectItem Value="@("EC-Karte")">EC-Karte</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _bezahltDialog = false)">Abbrechen</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="BezahltBestaetigt">Bestätigen</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Rechnung> _rechnungen = [];
+    private string _suche = "";
+    private string _statusFilter = "alle";
+    private bool _bezahltDialog;
+    private string _zahlungsart = "Überweisung";
+    private Rechnung? _bezahltRechnung;
+    private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
+
+    private IEnumerable<Rechnung> GefilterteRechnungen => _rechnungen
+        .Where(r => string.IsNullOrEmpty(_suche) ||
+                    r.Rechnungsnr.Contains(_suche, StringComparison.OrdinalIgnoreCase) ||
+                    (r.Patient?.VollerName.Contains(_suche, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(r => _statusFilter == "alle" || (_statusFilter == "bezahlt" && r.Bezahlt) || (_statusFilter == "offen" && !r.Bezahlt));
+
+    protected override async Task OnInitializedAsync() =>
+        _rechnungen = await RechnungsSvc.AlleRechnungenAsync();
+
+    private void OnStatusFilterChanged(string? val) => _statusFilter = val ?? "alle";
+
+    private async Task PdfHerunterladen(int id)
+    {
+        var r = await RechnungsSvc.GetRechnungAsync(id);
+        if (r is null) return;
+        var praxis = await PraxisSvc.GetPraxisDatenAsync();
+        var pdfBytes = PdfSvc.GenerateRechnung(r, praxis);
+        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}.pdf", "application/pdf", pdfBytes);
+        Snackbar.Add("PDF heruntergeladen", Severity.Success);
+    }
+
+    private async Task ZugferdHerunterladen(int id)
+    {
+        var r = await RechnungsSvc.GetRechnungAsync(id);
+        if (r is null) return;
+        var praxis = await PraxisSvc.GetPraxisDatenAsync();
+        var xml = ZugferdSvc.GenerateXml(r, praxis);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
+        await JS.InvokeVoidAsync("downloadFile", $"{r.Rechnungsnr}_ZUGFeRD.xml", "application/xml", bytes);
+        Snackbar.Add("ZUGFeRD XML heruntergeladen", Severity.Info);
+    }
+
+    private void BezahltMarkieren(Rechnung r) { _bezahltRechnung = r; _bezahltDialog = true; }
+
+    private async Task BezahltBestaetigt()
+    {
+        if (_bezahltRechnung is not null)
+        {
+            await RechnungsSvc.AlsBeahltMarkierenAsync(_bezahltRechnung.Id, _zahlungsart);
+            Snackbar.Add("Rechnung als bezahlt markiert.", Severity.Success);
+            _bezahltDialog = false;
+            _rechnungen = await RechnungsSvc.AlleRechnungenAsync();
+        }
+    }
+}

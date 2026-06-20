@@ -1,0 +1,47 @@
+<MudNavMenu Class="pa-2">
+    <MudNavLink Href="/" Match="NavLinkMatch.All"
+                Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Success">
+        Dashboard
+    </MudNavLink>
+
+    <MudDivider Class="my-2" />
+    <MudText Typo="Typo.overline" Color="Color.Surface" Class="px-3 py-1" Style="opacity:0.5">Verwaltung</MudText>
+
+    <MudNavLink Href="/patienten"
+                Icon="@Icons.Material.Filled.People" IconColor="Color.Success">
+        Patienten
+    </MudNavLink>
+
+    <MudNavLink Href="/termine"
+                Icon="@Icons.Material.Filled.CalendarMonth" IconColor="Color.Success">
+        Termine
+    </MudNavLink>
+
+    <MudDivider Class="my-2" />
+    <MudText Typo="Typo.overline" Color="Color.Surface" Class="px-3 py-1" Style="opacity:0.5">Klinik</MudText>
+
+    <MudNavLink Href="/behandlungen"
+                Icon="@Icons.Material.Filled.MedicalServices" IconColor="Color.Success">
+        Behandlungen
+    </MudNavLink>
+
+    <MudNavLink Href="/dokumente"
+                Icon="@Icons.Material.Filled.Folder" IconColor="Color.Success">
+        Dokumente
+    </MudNavLink>
+
+    <MudDivider Class="my-2" />
+    <MudText Typo="Typo.overline" Color="Color.Surface" Class="px-3 py-1" Style="opacity:0.5">Finanzen</MudText>
+
+    <MudNavLink Href="/rechnungen"
+                Icon="@Icons.Material.Filled.Receipt" IconColor="Color.Warning">
+        Rechnungen (ZUGFeRD)
+    </MudNavLink>
+
+    <MudDivider Class="my-2" />
+
+    <MudNavLink Href="/einstellungen"
+                Icon="@Icons.Material.Filled.Settings" IconColor="Color.Default">
+        Einstellungen
+    </MudNavLink>
+</MudNavMenu>
