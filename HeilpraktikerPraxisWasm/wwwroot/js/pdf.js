@@ -187,3 +187,14 @@ window.praxisPdf = {
         setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 };
+
+window.praxisEmail = {
+    send: async function (serviceId, templateId, publicKey, params) {
+        emailjs.init({ publicKey: publicKey });
+        await emailjs.send(serviceId, templateId, params);
+    },
+    openSms: function (telefon, text) {
+        const nr = telefon.replace(/\s+/g, '');
+        window.location.href = `sms:${nr}?body=${encodeURIComponent(text)}`;
+    }
+};

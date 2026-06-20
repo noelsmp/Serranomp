@@ -1,5 +1,6 @@
 @page "/termine"
 @inject TerminService TerminSvc
+@inject EmailService EmailSvc
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 
@@ -36,7 +37,7 @@
         var tagTermine = _termine.Where(t => t.Datum.Date == tag.Date).OrderBy(t => t.Datum).ToList();
         var istHeute = tag.Date == DateTime.Today;
 
-        <MudItem xs="12" sm="6" md="12/7" lg="12/7">
+        <MudItem xs="12" sm="6">
             <MudCard Elevation="@(istHeute ? 4 : 1)"
                      Style="@(istHeute ? "border: 2px solid #15803d;" : "")">
                 <MudCardHeader Class="pb-1">
@@ -83,7 +84,7 @@
             <MudTh>Behandlungsart</MudTh>
             <MudTh>Dauer</MudTh>
             <MudTh>Status</MudTh>
-            <MudTh></MudTh>
+            <MudTh>Aktionen</MudTh>
         </HeaderContent>
         <RowTemplate Context="t">
             <MudTd>@t.Datum.ToString("dd.MM.yyyy HH:mm")</MudTd>
@@ -98,6 +99,20 @@
             <MudTd>
                 <MudStack Row="true">
                     <div @onclick:stopPropagation>
+                        <MudTooltip Text="Per E-Mail senden">
+                            <MudIconButton Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Primary"
+                                           Disabled="@string.IsNullOrEmpty(t.Patient?.Email)"
+                                           OnClick="@(() => MailDialogOeffnen(t))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
+                        <MudTooltip Text="Per SMS senden">
+                            <MudIconButton Icon="@Icons.Material.Filled.Sms" Size="Size.Small" Color="Color.Secondary"
+                                           Disabled="@string.IsNullOrEmpty(t.Patient?.Telefon)"
+                                           OnClick="@(() => SmsSenden(t))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                        OnClick="@(() => Nav.NavigateTo($"/termine/{t.Id}/bearbeiten"))" />
                     </div>
@@ -111,9 +126,57 @@
     </MudTable>
 </MudCard>
 
+<!-- Mail-Dialog -->
+<MudDialog @bind-Visible="_mailDialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Terminbestätigung per E-Mail</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_mailFehler != null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3">@_mailFehler</MudAlert>
+        }
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Termin: <b>@_mailTermin?.Datum.ToString("dd.MM.yyyy HH:mm")</b> · @_mailTermin?.Art
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_mailEmpfaenger" Label="E-Mail Empfänger"
+                              Variant="Variant.Outlined" InputType="InputType.Email"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Der Patient erhält eine Terminbestätigung mit Datum, Uhrzeit und Praxisadresse.
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => { _mailDialog = false; _mailFehler = null; })">Abbrechen</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   Disabled="@(_mailSending || string.IsNullOrWhiteSpace(_mailEmpfaenger))"
+                   OnClick="MailSenden">
+            @(_mailSending ? "Wird gesendet..." : "Senden")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private List<Termin> _termine = [];
     private DateTime _wochenStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + 1);
+
+    private bool _mailDialog;
+    private bool _mailSending;
+    private string? _mailFehler;
+    private string _mailEmpfaenger = "";
+    private Termin? _mailTermin;
 
     protected override async Task OnInitializedAsync() => await Laden();
 
@@ -123,6 +186,41 @@
     private async Task VorherigeWoche() { _wochenStart = _wochenStart.AddDays(-7); await Laden(); }
     private async Task NaechsteWoche() { _wochenStart = _wochenStart.AddDays(7); await Laden(); }
     private async Task Heute() { _wochenStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + 1); await Laden(); }
+
+    private void MailDialogOeffnen(Termin t)
+    {
+        _mailTermin = t;
+        _mailEmpfaenger = t.Patient?.Email ?? "";
+        _mailFehler = null;
+        _mailDialog = true;
+    }
+
+    private async Task MailSenden()
+    {
+        if (_mailTermin is null || string.IsNullOrWhiteSpace(_mailEmpfaenger)) return;
+        _mailSending = true;
+        _mailFehler = null;
+        try
+        {
+            await EmailSvc.TerminBestaetigenAsync(_mailTermin, _mailEmpfaenger);
+            Snackbar.Add($"Terminbestätigung an {_mailEmpfaenger} gesendet!", Severity.Success);
+            _mailDialog = false;
+        }
+        catch (Exception ex)
+        {
+            _mailFehler = ex.Message;
+        }
+        finally
+        {
+            _mailSending = false;
+        }
+    }
+
+    private async Task SmsSenden(Termin t)
+    {
+        if (string.IsNullOrEmpty(t.Patient?.Telefon)) return;
+        await EmailSvc.SmsOeffnenAsync(t.Patient.Telefon, t);
+    }
 
     private async Task LoeschenAsync(int id)
     {
