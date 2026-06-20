@@ -31,11 +31,12 @@ builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
-// Datenbank erstellen/migrieren
+// Datenbank erstellen + Testdaten einfügen
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PraxisDbContext>();
     db.Database.EnsureCreated();
+    await HeilpraktikerPraxis.Data.TestdatenSeeder.SeedAsync(db);
 }
 
 if (!app.Environment.IsDevelopment())
