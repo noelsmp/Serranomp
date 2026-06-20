@@ -119,6 +119,40 @@ else
             </MudCard>
         </MudItem>
 
+        <!-- E-Mail / SMS -->
+        <MudItem xs="12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1">
+                            <MudIcon Icon="@Icons.Material.Filled.Email" Class="mr-2" />E-Mail (EmailJS)
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_daten.EmailJsServiceId" Label="Service ID"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_daten.EmailJsTemplateId" Label="Template ID"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_daten.EmailJsPublicKey" Label="Public Key"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                Kostenlos bis 200 Mails/Monat · emailjs.com
+                            </MudAlert>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
         <!-- PWA Info -->
         <MudItem xs="12">
             <MudAlert Severity="Severity.Success" Icon="@Icons.Material.Filled.PhoneIphone">

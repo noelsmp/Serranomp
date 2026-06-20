@@ -21,4 +21,7 @@ public class PraxisDaten
     public string? SmtpUsername { get; set; }
     public string? SmtpPassword { get; set; }
     public bool SmtpSsl { get; set; } = true;
+    public string? EmailJsServiceId { get; set; } = "service_xtny8ur";
+    public string? EmailJsTemplateId { get; set; } = "template_1jlhfxo";
+    public string? EmailJsPublicKey { get; set; } = "TlmNF4ZJLZpBINMR5";
 }

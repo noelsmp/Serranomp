@@ -22,6 +22,7 @@ builder.Services.AddScoped<DokumentService>();
 builder.Services.AddScoped<GebueHService>();
 builder.Services.AddScoped<ZugferdService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<TestdatenSeeder>();
 
 await builder.Build().RunAsync();
