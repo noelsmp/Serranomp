@@ -1,6 +1,5 @@
 @page "/einstellungen"
 @inject PraxisService PraxisSvc
-@inject PinService PinSvc
 @inject ISnackbar Snackbar
 
 <PageTitle>Einstellungen</PageTitle>
@@ -120,50 +119,6 @@ else
             </MudCard>
         </MudItem>
 
-        <!-- PIN-Schutz -->
-        <MudItem xs="12" md="6">
-            <MudCard Elevation="2">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.subtitle1">
-                            <MudIcon Icon="@Icons.Material.Filled.Lock" Class="mr-2" />PIN-Schutz
-                        </MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudGrid Spacing="2">
-                        @if (_pinGesetzt)
-                        {
-                            <MudItem xs="12">
-                                <MudAlert Severity="Severity.Success" Dense="true">PIN ist aktiv — App ist geschützt.</MudAlert>
-                            </MudItem>
-                            <MudItem xs="12">
-                                <MudTextField @bind-Value="_neuerPin" Label="Neuer PIN (4-stellig)"
-                                              InputType="InputType.Password" MaxLength="4"
-                                              Variant="Variant.Outlined" Placeholder="Leer lassen = unverändert" />
-                            </MudItem>
-                            <MudItem xs="12">
-                                <MudButton Variant="Variant.Outlined" Color="Color.Error"
-                                           StartIcon="@Icons.Material.Filled.LockOpen"
-                                           OnClick="PinEntfernen">PIN entfernen</MudButton>
-                            </MudItem>
-                        }
-                        else
-                        {
-                            <MudItem xs="12">
-                                <MudAlert Severity="Severity.Warning" Dense="true">Kein PIN gesetzt — App ist ungeschützt!</MudAlert>
-                            </MudItem>
-                            <MudItem xs="12">
-                                <MudTextField @bind-Value="_neuerPin" Label="PIN festlegen (4-stellig)"
-                                              InputType="InputType.Password" MaxLength="4"
-                                              Variant="Variant.Outlined" />
-                            </MudItem>
-                        }
-                    </MudGrid>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
         <!-- E-Mail / SMS -->
         <MudItem xs="12">
             <MudCard Elevation="2">
@@ -221,22 +176,11 @@ else
     private PraxisDaten _daten = new();
     private bool _laden = true;
     private bool _speichern;
-    private bool _pinGesetzt;
-    private string _neuerPin = "";
 
     protected override async Task OnInitializedAsync()
     {
         _daten = await PraxisSvc.GetPraxisDatenAsync();
-        _pinGesetzt = await PinSvc.IsPinSetAsync();
         _laden = false;
-    }
-
-    private async Task PinEntfernen()
-    {
-        await PinSvc.RemovePinAsync();
-        _pinGesetzt = false;
-        _neuerPin = "";
-        Snackbar.Add("PIN entfernt.", Severity.Info);
     }
 
     private async Task LogoGewaehlt(InputFileChangeEventArgs e)
@@ -249,19 +193,6 @@ else
     private async Task Speichern()
     {
         _speichern = true;
-        if (!string.IsNullOrWhiteSpace(_neuerPin))
-        {
-            if (_neuerPin.Length != 4 || !_neuerPin.All(char.IsDigit))
-            {
-                Snackbar.Add("PIN muss genau 4 Ziffern haben.", Severity.Error);
-                _speichern = false;
-                return;
-            }
-            await PinSvc.SetPinAsync(_neuerPin);
-            _pinGesetzt = true;
-            _neuerPin = "";
-            Snackbar.Add("PIN gespeichert!", Severity.Success);
-        }
         await PraxisSvc.SpeichernAsync(_daten);
         Snackbar.Add("Einstellungen gespeichert!", Severity.Success);
         _speichern = false;
