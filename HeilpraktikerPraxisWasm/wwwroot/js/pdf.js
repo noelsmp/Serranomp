@@ -188,6 +188,47 @@ window.praxisPdf = {
     }
 };
 
+window.praxisPdf.shareZugferd = async function (rechnung, praxis, xmlString, passwort) {
+    // ZUGFeRD PDF generieren
+    const pdf = this._build(rechnung, praxis);
+    const pdfBytes = pdf.output('arraybuffer');
+
+    // Factur-X XML einbetten
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const xmlBytes = new TextEncoder().encode(xmlString);
+    pdfDoc.attach(xmlBytes, 'factur-x.xml', {
+        mimeType: 'text/xml',
+        description: 'Factur-X/ZUGFeRD Rechnung',
+        creationDate: new Date(),
+        modificationDate: new Date(),
+        afRelationship: 'Alternative'
+    });
+    const finalPdf = await pdfDoc.save();
+    const dateiname = (rechnung.rechnungsnr || 'Rechnung') + '_ZUGFeRD.pdf';
+    const file = new File([finalPdf], dateiname, { type: 'application/pdf' });
+
+    const passwortHinweis = passwort
+        ? `\n\nHinweis: Das Dokument ist vertraulich. Ihr persönliches Passwort: ${passwort}`
+        : '';
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+            title: `Rechnung ${rechnung.rechnungsnr}`,
+            text: `Sehr geehrte/r ${rechnung.patient?.vollerName ?? 'Patient/in'},\n\nanbei erhalten Sie Ihre Rechnung ${rechnung.rechnungsnr} über ${rechnung.gesamtbetrag?.toFixed(2)} €.${passwortHinweis}\n\nMit freundlichen Grüßen\n${praxis.inhaberin}\n${praxis.name}`,
+            files: [file]
+        });
+    } else {
+        // Fallback: direkt herunterladen
+        const url = URL.createObjectURL(new Blob([finalPdf], { type: 'application/pdf' }));
+        const a = document.createElement('a');
+        a.href = url; a.download = dateiname;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+};
+
 window.praxisEmail = {
     send: async function (serviceId, templateId, publicKey, params) {
         emailjs.init({ publicKey: publicKey });
