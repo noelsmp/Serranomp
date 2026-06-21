@@ -82,6 +82,12 @@
                         </MudTooltip>
                     </div>
                     <div @onclick:stopPropagation>
+                        <MudTooltip Text="Per E-Mail senden (ZUGFeRD)">
+                            <MudIconButton Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => MailDialogOeffnen(r))" />
+                        </MudTooltip>
+                    </div>
+                    <div @onclick:stopPropagation>
                         <MudTooltip Text="Als bezahlt markieren">
                             <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success"
                                            Disabled="@r.Bezahlt" OnClick="@(() => BezahltMarkieren(r))" />
@@ -119,6 +125,58 @@
     </DialogActions>
 </MudDialog>
 
+<!-- Mail-Dialog -->
+<MudDialog @bind-Visible="_mailDialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Rechnung per E-Mail senden</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Rechnung: <b>@_mailRechnung?.Rechnungsnr</b> · @_mailRechnung?.Gesamtbetrag.ToString("C2", _deDE)
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Es öffnet sich das Teilen-Menü des iPhones. Tippe auf „Mail" um die Rechnung zu versenden.
+                </MudAlert>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2"><b>Empfänger:</b> @(_mailRechnung?.Patient?.Email ?? "– keine E-Mail hinterlegt")</MudText>
+            </MudItem>
+            @if (!string.IsNullOrEmpty(_passwort))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Warning" Icon="@Icons.Material.Filled.Lock">
+                        <b>Passwort für den Patienten:</b> @_passwort
+                        <MudText Typo="Typo.caption" Class="mt-1">
+                            (Geburtsdatum in Format TTMMJJJJ) — bitte separat per SMS mitteilen.
+                        </MudText>
+                    </MudAlert>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Success" Dense="true" Icon="@Icons.Material.Filled.Security">
+                    DSGVO-konform: Rechnung wird nur an den Patienten selbst gesendet · TLS-verschlüsselt
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _mailDialog = false)">Abbrechen</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Share"
+                   Disabled="@_mailSending"
+                   OnClick="MailSenden">
+            @(_mailSending ? "Wird geöffnet..." : "ZUGFeRD teilen")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private List<Rechnung> _rechnungen = [];
     private string _suche = "";
@@ -126,6 +184,11 @@
     private bool _bezahltDialog;
     private string _zahlungsart = "Überweisung";
     private Rechnung? _bezahltRechnung;
+
+    private bool _mailDialog;
+    private bool _mailSending;
+    private Rechnung? _mailRechnung;
+    private string? _passwort;
     private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
 
     private IEnumerable<Rechnung> GefilterteRechnungen => _rechnungen
@@ -154,6 +217,37 @@
         var praxis = await PraxisSvc.GetPraxisDatenAsync();
         var xml = ZugferdSvc.GenerateXml(r, praxis);
         await PdfSvc.DownloadZugferdAsync(r, praxis, xml);
+    }
+
+    private async Task MailDialogOeffnen(Rechnung r)
+    {
+        _mailRechnung = await RechnungsSvc.GetRechnungAsync(r.Id);
+        // Passwort = Geburtsdatum in TTMMJJJJ
+        _passwort = _mailRechnung?.Patient?.Geburtsdatum.HasValue == true
+            ? _mailRechnung.Patient.Geburtsdatum!.Value.ToString("ddMMyyyy")
+            : null;
+        _mailDialog = true;
+    }
+
+    private async Task MailSenden()
+    {
+        if (_mailRechnung is null) return;
+        _mailSending = true;
+        try
+        {
+            var praxis = await PraxisSvc.GetPraxisDatenAsync();
+            var xml = ZugferdSvc.GenerateXml(_mailRechnung, praxis);
+            await PdfSvc.ShareZugferdAsync(_mailRechnung, praxis, xml, _passwort);
+            _mailDialog = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fehler: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _mailSending = false;
+        }
     }
 
     private void BezahltMarkieren(Rechnung r) { _bezahltRechnung = r; _bezahltDialog = true; }
