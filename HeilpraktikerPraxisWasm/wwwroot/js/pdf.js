@@ -188,12 +188,10 @@ window.praxisPdf = {
     }
 };
 
-window.praxisPdf.shareZugferd = async function (rechnung, praxis, xmlString, passwort) {
-    // ZUGFeRD PDF generieren
+window.praxisPdf.shareZugferd = async function (rechnung, praxis, xmlString) {
     const pdf = this._build(rechnung, praxis);
     const pdfBytes = pdf.output('arraybuffer');
 
-    // Factur-X XML einbetten
     const { PDFDocument } = PDFLib;
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const xmlBytes = new TextEncoder().encode(xmlString);
@@ -208,14 +206,10 @@ window.praxisPdf.shareZugferd = async function (rechnung, praxis, xmlString, pas
     const dateiname = (rechnung.rechnungsnr || 'Rechnung') + '_ZUGFeRD.pdf';
     const file = new File([finalPdf], dateiname, { type: 'application/pdf' });
 
-    const passwortHinweis = passwort
-        ? `\n\nHinweis: Das Dokument ist vertraulich. Ihr persönliches Passwort: ${passwort}`
-        : '';
-
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
             title: `Rechnung ${rechnung.rechnungsnr}`,
-            text: `Sehr geehrte/r ${rechnung.patient?.vollerName ?? 'Patient/in'},\n\nanbei erhalten Sie Ihre Rechnung ${rechnung.rechnungsnr} über ${rechnung.gesamtbetrag?.toFixed(2)} €.${passwortHinweis}\n\nMit freundlichen Grüßen\n${praxis.inhaberin}\n${praxis.name}`,
+            text: `Sehr geehrte/r ${rechnung.patient?.vollerName ?? 'Patient/in'},\n\nanbei erhalten Sie Ihre Rechnung ${rechnung.rechnungsnr} über ${rechnung.gesamtbetrag?.toFixed(2)} €.\n\nMit freundlichen Grüßen\n${praxis.inhaberin}\n${praxis.name}`,
             files: [file]
         });
     } else {
