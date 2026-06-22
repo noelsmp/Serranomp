@@ -114,7 +114,7 @@ window.praxisPdf = {
             doc.setTextColor(0,0,0); doc.setFontSize(9); doc.setFont('helvetica','normal');
             doc.text(`Bitte überweisen Sie den Betrag bis zum ${faellig} auf folgendes Konto:`, M, y); y+=6;
             doc.setFont('helvetica','bold');
-            doc.text(`IBAN: ${praxis.iban}  BIC: ${praxis.bic||''}  ${praxis.bank||''}`, M, y); y+=6;
+            doc.text(`IBAN: ${(praxis.iban||'').replace(/\s+/g,'')}  BIC: ${praxis.bic||''}  ${praxis.bank||''}`, M, y); y+=6;
             doc.text(`Verwendungszweck: ${rechnung.rechnungsnr||''}`, M, y); y+=14;
         }
 

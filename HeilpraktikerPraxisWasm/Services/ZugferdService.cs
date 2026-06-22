@@ -72,11 +72,22 @@ public class ZugferdService
         sb.AppendLine("        </ram:PostalTradeAddress>");
         if (!string.IsNullOrEmpty(praxis.Email))
             sb.AppendLine($"        <ram:URIUniversalCommunication><ram:URIID schemeID=\"EM\">{Escape(praxis.Email)}</ram:URIID></ram:URIUniversalCommunication>");
-        if (!string.IsNullOrEmpty(praxis.Steuernr))
+        if (!string.IsNullOrEmpty(praxis.UstIdNr))
+            sb.AppendLine($"        <ram:SpecifiedTaxRegistration><ram:ID schemeID=\"VA\">{Escape(praxis.UstIdNr)}</ram:ID></ram:SpecifiedTaxRegistration>");
+        else if (!string.IsNullOrEmpty(praxis.Steuernr))
             sb.AppendLine($"        <ram:SpecifiedTaxRegistration><ram:ID schemeID=\"FC\">{Escape(praxis.Steuernr)}</ram:ID></ram:SpecifiedTaxRegistration>");
         sb.AppendLine("      </ram:SellerTradeParty>");
         sb.AppendLine("      <ram:BuyerTradeParty>");
         sb.AppendLine($"        <ram:Name>{Escape(patientName)}</ram:Name>");
+        sb.AppendLine("        <ram:PostalTradeAddress>");
+        if (!string.IsNullOrEmpty(rechnung.Patient?.Plz))
+            sb.AppendLine($"          <ram:PostcodeCode>{Escape(rechnung.Patient.Plz)}</ram:PostcodeCode>");
+        if (!string.IsNullOrEmpty(rechnung.Patient?.Strasse))
+            sb.AppendLine($"          <ram:LineOne>{Escape(rechnung.Patient.Strasse)}</ram:LineOne>");
+        if (!string.IsNullOrEmpty(rechnung.Patient?.Ort))
+            sb.AppendLine($"          <ram:CityName>{Escape(rechnung.Patient.Ort)}</ram:CityName>");
+        sb.AppendLine("          <ram:CountryID>DE</ram:CountryID>");
+        sb.AppendLine("        </ram:PostalTradeAddress>");
         sb.AppendLine("      </ram:BuyerTradeParty>");
         sb.AppendLine("    </ram:ApplicableHeaderTradeAgreement>");
 
@@ -113,6 +124,7 @@ public class ZugferdService
         sb.AppendLine($"        <ram:TaxBasisTotalAmount>{N(rechnung.Zwischensumme)}</ram:TaxBasisTotalAmount>");
         sb.AppendLine($"        <ram:TaxTotalAmount currencyID=\"EUR\">{N(0)}</ram:TaxTotalAmount>");
         sb.AppendLine($"        <ram:GrandTotalAmount>{N(rechnung.Gesamtbetrag)}</ram:GrandTotalAmount>");
+        sb.AppendLine($"        <ram:TotalPrepaidAmount>{N(rechnung.Bezahlt ? rechnung.Gesamtbetrag : 0)}</ram:TotalPrepaidAmount>");
         sb.AppendLine($"        <ram:DuePayableAmount>{N(rechnung.Bezahlt ? 0 : rechnung.Gesamtbetrag)}</ram:DuePayableAmount>");
         sb.AppendLine("      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>");
         sb.AppendLine("    </ram:ApplicableHeaderTradeSettlement>");
