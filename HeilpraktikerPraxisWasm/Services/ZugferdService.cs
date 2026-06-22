@@ -1,11 +1,14 @@
 using HeilpraktikerPraxisWasm.Models;
+using System.Globalization;
 using System.Text;
 
 namespace HeilpraktikerPraxisWasm.Services;
 
-// ZUGFeRD 2.x / Factur-X EN 16931 Minimum Profile
+// ZUGFeRD 2.x / Factur-X EN 16931
 public class ZugferdService
 {
+    private static string N(decimal d) => d.ToString("F2", CultureInfo.InvariantCulture);
+
     public string GenerateXml(Rechnung rechnung, PraxisDaten praxis)
     {
         var sb = new StringBuilder();
@@ -19,10 +22,10 @@ public class ZugferdService
         sb.AppendLine("""  xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" """);
         sb.AppendLine("""  xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">""");
 
-        // Context
+        // Context — EN 16931 profile supports line items
         sb.AppendLine("  <rsm:ExchangedDocumentContext>");
         sb.AppendLine("    <ram:GuidelineSpecifiedDocumentContextParameter>");
-        sb.AppendLine("      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:minimum</ram:ID>");
+        sb.AppendLine("      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931</ram:ID>");
         sb.AppendLine("    </ram:GuidelineSpecifiedDocumentContextParameter>");
         sb.AppendLine("  </rsm:ExchangedDocumentContext>");
 
@@ -47,12 +50,12 @@ public class ZugferdService
             sb.AppendLine($"      <ram:AssociatedDocumentLineDocument><ram:LineID>{idx}</ram:LineID></ram:AssociatedDocumentLineDocument>");
             sb.AppendLine($"      <ram:SpecifiedTradeProduct><ram:Name>{Escape(pos.Leistung)} ({Escape(pos.Ziffer)})</ram:Name></ram:SpecifiedTradeProduct>");
             sb.AppendLine($"      <ram:SpecifiedLineTradeAgreement>");
-            sb.AppendLine($"        <ram:NetPriceProductTradePrice><ram:ChargeAmount>{pos.Einzelpreis:F2}</ram:ChargeAmount></ram:NetPriceProductTradePrice>");
+            sb.AppendLine($"        <ram:NetPriceProductTradePrice><ram:ChargeAmount>{N(pos.Einzelpreis)}</ram:ChargeAmount></ram:NetPriceProductTradePrice>");
             sb.AppendLine($"      </ram:SpecifiedLineTradeAgreement>");
             sb.AppendLine($"      <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode=\"C62\">{pos.Anzahl}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>");
             sb.AppendLine($"      <ram:SpecifiedLineTradeSettlement>");
             sb.AppendLine($"        <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>E</ram:CategoryCode><ram:RateApplicablePercent>0</ram:RateApplicablePercent></ram:ApplicableTradeTax>");
-            sb.AppendLine($"        <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>{pos.Einzelpreis * pos.Anzahl:F2}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>");
+            sb.AppendLine($"        <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>{N(pos.Einzelpreis * pos.Anzahl)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>");
             sb.AppendLine($"      </ram:SpecifiedLineTradeSettlement>");
             sb.AppendLine($"    </ram:IncludedSupplyChainTradeLineItem>");
         }
@@ -95,22 +98,22 @@ public class ZugferdService
             sb.AppendLine("      </ram:SpecifiedTradeSettlementPaymentMeans>");
         }
         sb.AppendLine("      <ram:ApplicableTradeTax>");
-        sb.AppendLine("        <ram:CalculatedAmount>0.00</ram:CalculatedAmount>");
+        sb.AppendLine($"        <ram:CalculatedAmount>{N(0)}</ram:CalculatedAmount>");
         sb.AppendLine("        <ram:TypeCode>VAT</ram:TypeCode>");
         sb.AppendLine("        <ram:ExemptionReason>Heilbehandlungen im Bereich der Humanmedizin durch Heilpraktiker sind nach § 4 Nr. 14 UStG umsatzsteuerbefreit.</ram:ExemptionReason>");
-        sb.AppendLine($"        <ram:BasisAmount>{rechnung.Zwischensumme:F2}</ram:BasisAmount>");
+        sb.AppendLine($"        <ram:BasisAmount>{N(rechnung.Zwischensumme)}</ram:BasisAmount>");
         sb.AppendLine("        <ram:CategoryCode>E</ram:CategoryCode>");
-        sb.AppendLine("        <ram:RateApplicablePercent>0</ram:RateApplicablePercent>");
+        sb.AppendLine($"        <ram:RateApplicablePercent>{N(0)}</ram:RateApplicablePercent>");
         sb.AppendLine("      </ram:ApplicableTradeTax>");
         sb.AppendLine("      <ram:SpecifiedTradePaymentTerms>");
         sb.AppendLine($"        <ram:DueDateDateTime><udt:DateTimeString format=\"102\">{faelligDatum}</udt:DateTimeString></ram:DueDateDateTime>");
         sb.AppendLine("      </ram:SpecifiedTradePaymentTerms>");
         sb.AppendLine("      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>");
-        sb.AppendLine($"        <ram:LineTotalAmount>{rechnung.Zwischensumme:F2}</ram:LineTotalAmount>");
-        sb.AppendLine($"        <ram:TaxBasisTotalAmount>{rechnung.Zwischensumme:F2}</ram:TaxBasisTotalAmount>");
-        sb.AppendLine("        <ram:TaxTotalAmount currencyID=\"EUR\">0.00</ram:TaxTotalAmount>");
-        sb.AppendLine($"        <ram:GrandTotalAmount>{rechnung.Gesamtbetrag:F2}</ram:GrandTotalAmount>");
-        sb.AppendLine($"        <ram:DuePayableAmount>{(rechnung.Bezahlt ? 0 : rechnung.Gesamtbetrag):F2}</ram:DuePayableAmount>");
+        sb.AppendLine($"        <ram:LineTotalAmount>{N(rechnung.Zwischensumme)}</ram:LineTotalAmount>");
+        sb.AppendLine($"        <ram:TaxBasisTotalAmount>{N(rechnung.Zwischensumme)}</ram:TaxBasisTotalAmount>");
+        sb.AppendLine($"        <ram:TaxTotalAmount currencyID=\"EUR\">{N(0)}</ram:TaxTotalAmount>");
+        sb.AppendLine($"        <ram:GrandTotalAmount>{N(rechnung.Gesamtbetrag)}</ram:GrandTotalAmount>");
+        sb.AppendLine($"        <ram:DuePayableAmount>{N(rechnung.Bezahlt ? 0 : rechnung.Gesamtbetrag)}</ram:DuePayableAmount>");
         sb.AppendLine("      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>");
         sb.AppendLine("    </ram:ApplicableHeaderTradeSettlement>");
         sb.AppendLine("  </rsm:SupplyChainTradeTransaction>");
