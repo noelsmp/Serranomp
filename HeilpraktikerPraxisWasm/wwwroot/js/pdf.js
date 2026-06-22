@@ -133,6 +133,107 @@ window.praxisPdf = {
         return doc;
     },
 
+    _addPdfA3Metadata: function (pdfDoc, rechnung, praxis) {
+        const { PDFName, PDFNumber } = PDFLib;
+        const now = new Date();
+        const isoDate = now.toISOString().replace(/\.\d{3}Z$/, '+00:00');
+        const nr = rechnung.rechnungsnr || 'Rechnung';
+        const autor = praxis.inhaberin || praxis.name || 'Heilpraktiker';
+
+        const xmpXml = `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+      <pdfaid:part>3</pdfaid:part>
+      <pdfaid:conformance>B</pdfaid:conformance>
+    </rdf:Description>
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <dc:format>application/pdf</dc:format>
+      <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Rechnung ${nr}</rdf:li></rdf:Alt></dc:title>
+      <dc:creator><rdf:Seq><rdf:li>${autor}</rdf:li></rdf:Seq></dc:creator>
+    </rdf:Description>
+    <rdf:Description rdf:about=""
+        xmlns:pdf="http://ns.adobe.com/pdf/1.3/">
+      <pdf:Producer>Naturheilpraxis App (pdf-lib)</pdf:Producer>
+    </rdf:Description>
+    <rdf:Description rdf:about=""
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/">
+      <xmp:CreatorTool>Naturheilpraxis App</xmp:CreatorTool>
+      <xmp:CreateDate>${isoDate}</xmp:CreateDate>
+      <xmp:ModifyDate>${isoDate}</xmp:ModifyDate>
+    </rdf:Description>
+    <rdf:Description rdf:about=""
+        xmlns:pdfaExtension="http://www.aiim.org/pdfa/ns/extension/"
+        xmlns:pdfaSchema="http://www.aiim.org/pdfa/ns/schema#"
+        xmlns:pdfaProperty="http://www.aiim.org/pdfa/ns/property#">
+      <pdfaExtension:schemas>
+        <rdf:Bag>
+          <rdf:li rdf:parseType="Resource">
+            <pdfaSchema:schema>Factur-X PDFA Extension Schema</pdfaSchema:schema>
+            <pdfaSchema:namespaceURI>urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#</pdfaSchema:namespaceURI>
+            <pdfaSchema:prefix>fx</pdfaSchema:prefix>
+            <pdfaSchema:property>
+              <rdf:Seq>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>DocumentFileName</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>Name of the embedded XML invoice file</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>DocumentType</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>Type of the embedded XML invoice</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>Version</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>Factur-X specification version</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>ConformanceLevel</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>Conformance level of the embedded XML</pdfaProperty:description>
+                </rdf:li>
+              </rdf:Seq>
+            </pdfaSchema:property>
+          </rdf:li>
+        </rdf:Bag>
+      </pdfaExtension:schemas>
+    </rdf:Description>
+    <rdf:Description rdf:about=""
+        xmlns:fx="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#">
+      <fx:DocumentFileName>factur-x.xml</fx:DocumentFileName>
+      <fx:DocumentType>INVOICE</fx:DocumentType>
+      <fx:Version>1.0</fx:Version>
+      <fx:ConformanceLevel>EN 16931</fx:ConformanceLevel>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+
+        const xmpBytes = new TextEncoder().encode(xmpXml);
+        const metadataStream = pdfDoc.context.stream(xmpBytes, {
+            Type: PDFName.of('Metadata'),
+            Subtype: PDFName.of('XML'),
+            Length: PDFNumber.of(xmpBytes.length),
+        });
+        pdfDoc.catalog.set(PDFName.of('Metadata'), pdfDoc.context.register(metadataStream));
+        pdfDoc.catalog.set(PDFName.of('MarkInfo'), pdfDoc.context.obj({ Marked: true }));
+        pdfDoc.catalog.set(PDFName.of('ViewerPreferences'), pdfDoc.context.obj({ DisplayDocTitle: true }));
+        pdfDoc.setTitle(`Rechnung ${nr}`);
+        pdfDoc.setAuthor(autor);
+        pdfDoc.setCreator('Naturheilpraxis App');
+        pdfDoc.setProducer('pdf-lib');
+        pdfDoc.setCreationDate(now);
+        pdfDoc.setModificationDate(now);
+    },
+
     downloadRechnung: function (rechnung, praxis) {
         const doc = window.praxisPdf._build(rechnung, praxis);
         const blob = doc.output('blob');
@@ -157,7 +258,9 @@ window.praxisPdf = {
             description: 'ZUGFeRD/Factur-X Invoice',
             creationDate: new Date(),
             modificationDate: new Date(),
+            afRelationship: 'Alternative',
         });
+        this._addPdfA3Metadata(pdfDoc, rechnung, praxis);
         const merged = await pdfDoc.save();
 
         const blob = new Blob([merged], { type: 'application/pdf' });
@@ -195,13 +298,14 @@ window.praxisPdf.shareZugferd = async function (rechnung, praxis, xmlString) {
     const { PDFDocument } = PDFLib;
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const xmlBytes = new TextEncoder().encode(xmlString);
-    pdfDoc.attach(xmlBytes, 'factur-x.xml', {
+    await pdfDoc.attach(xmlBytes, 'factur-x.xml', {
         mimeType: 'text/xml',
         description: 'Factur-X/ZUGFeRD Rechnung',
         creationDate: new Date(),
         modificationDate: new Date(),
-        afRelationship: 'Alternative'
+        afRelationship: 'Alternative',
     });
+    this._addPdfA3Metadata(pdfDoc, rechnung, praxis);
     const finalPdf = await pdfDoc.save();
     const dateiname = (rechnung.rechnungsnr || 'Rechnung') + '_ZUGFeRD.pdf';
     const file = new File([finalPdf], dateiname, { type: 'application/pdf' });
