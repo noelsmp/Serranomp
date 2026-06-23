@@ -62,11 +62,8 @@ else
         }
     </MudStack>
 
-    <!-- Summe offene Beträge -->
-    @{
-        var offen = _rechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag);
-    }
-    @if (offen > 0)
+    var offen = _rechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag);
+    if (offen > 0)
     {
         <MudAlert Severity="Severity.Warning" Class="mt-3">
             <b>Offener Betrag:</b> @offen.ToString("C2", _deDE)
