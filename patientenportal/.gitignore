@@ -1,0 +1,24 @@
+# Next.js
+.next/
+out/
+
+# Node
+node_modules/
+
+# Umgebungsvariablen (NIEMALS committen!)
+.env
+.env.local
+.env.production
+
+# Datenbank und Uploads (sensible Patientendaten!)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
