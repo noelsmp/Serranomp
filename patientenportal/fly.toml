@@ -2,6 +2,7 @@
 # Deployment: fly deploy
 
 app = "naturheilpraxis-portal"
+# Testdomain: portal.seo-smp.de
 primary_region = "fra"   # Frankfurt (Deutschland)
 
 [build]
