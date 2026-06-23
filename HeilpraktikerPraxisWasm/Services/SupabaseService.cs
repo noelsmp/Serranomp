@@ -9,8 +9,8 @@ public class SupabaseService
     private readonly HttpClient _http;
 
     // ── Hier Supabase-Zugangsdaten eintragen ──────────────────────────────
-    private const string SupabaseUrl = "https://DEIN_PROJEKT.supabase.co";
-    private const string AnonKey     = "DEIN_ANON_KEY";
+    private const string SupabaseUrl = "https://ekezfsgpwkockqmllwvb.supabase.co";
+    private const string AnonKey     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZXpmc2dwd2tvY2txbWxsd3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzE4MTIsImV4cCI6MjA5NzgwNzgxMn0.Ly12TlbcxcEaYy_8U-e8f8J7oXu8tn71HYJ-qsaAO8A";
     // ──────────────────────────────────────────────────────────────────────
 
     private string? _accessToken;
