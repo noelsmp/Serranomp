@@ -91,6 +91,16 @@
     }
     .nav-cta:hover { background: var(--sage-dk) !important; color: #fff !important; }
 
+    .nav-portal {
+      display: inline-block;
+      border: 1px solid var(--sage);
+      color: var(--sage) !important;
+      padding: 0.35rem 0.9rem;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s !important;
+    }
+    .nav-portal:hover { background: var(--sage) !important; color: #fff !important; }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -670,7 +680,7 @@
     <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
     <li><a href="#kontakt" onclick="closeNav()">Kontakt</a></li>
     <li><a href="#impressum" onclick="closeNav()">Impressum</a></li>
-    <li><a href="https://portal.naturheilpraxis-hilfreich.de" onclick="closeNav()">Mein Bereich</a></li>
+    <li><a href="https://portal.naturheilpraxis-hilfreich.de" class="nav-portal" onclick="closeNav()">Patientenportal</a></li>
     <li><a href="termin.html" class="nav-cta" onclick="closeNav()">Termin buchen</a></li>
   </ul>
   <button class="hamburger" id="hamburger" aria-label="Menü" onclick="toggleNav()">
