@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Einsatzplanung – App Vorschau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #1a1f2e;
+    color: #1e2032;
+    padding: 32px 20px;
+  }
+
+  h1.page-title {
+    color: #e0e8ff;
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  .page-subtitle {
+    color: #8899bb;
+    text-align: center;
+    font-size: 13px;
+    margin-bottom: 48px;
+  }
+
+  /* ── Tab Navigation ── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: #2a3050;
+    color: #8899bb;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .2s;
+  }
+  .tab-btn:hover { background: #333d60; color: #ccd8ff; }
+  .tab-btn.active {
+    background: #0054a6;
+    color: #fff;
+    border-color: #3b80e8;
+  }
+
+  /* ── Device Frame ── */
+  .device-frame {
+    margin: 0 auto;
+    width: 1024px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,.7);
+    border: 2px solid #3a4060;
+  }
+
+  /* ── Screen (hidden by default) ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Shared Styles ── */
+  .header-bar {
+    height: 58px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .header-bar .back-btn {
+    color: rgba(255,255,255,.85);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(255,255,255,.12);
+    white-space: nowrap;
+  }
+  .header-bar .title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    flex: 1;
+  }
+  .header-bar .subtitle {
+    color: rgba(255,255,255,.6);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .firma-chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .chip-WT  { background: #0054a6; }
+  .chip-GWQ { background: #008c50; }
+  .chip-SGQ { background: #b43c00; }
+  .chip-GMA { background: #781e96; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-geplant     { color: #0054a6; background: #e8f0ff; }
+  .status-done        { color: #008c50; background: #e4f7ed; }
+  .status-abgesagt    { color: #c00; background: #ffe8e8; }
+
+  /* ═══════════════════════════════════════════
+     HOME SCREEN
+  ═══════════════════════════════════════════ */
+  #home .header-bar { background: #0054a6; }
+
+  .greeting-card {
+    margin: 16px;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,84,166,.08);
+  }
+  .greeting-card h2 { font-size: 18px; color: #0054a6; font-weight: 700; }
+  .greeting-card p  { font-size: 13px; color: #64707e; margin-top: 4px; }
+
+  .today-box {
+    margin: 0 16px 16px;
+    background: rgba(0,84,166,.06);
+    border: 2px solid #0054a6;
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .today-box .big-num {
+    font-size: 40px;
+    font-weight: 800;
+    color: #0054a6;
+    line-height: 1;
+  }
+  .today-box .today-text { font-size: 14px; color: #0054a6; font-weight: 600; }
+  .today-box .today-sub  { font-size: 12px; color: #6478a0; margin-top: 2px; }
+
+  .section-label {
+    padding: 8px 16px 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3a4060;
+  }
+
+  .einsatz-row {
+    margin: 6px 16px;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .einsatz-row .e-main  { font-size: 13px; font-weight: 700; color: #1e2032; }
+  .einsatz-row .e-sub   { font-size: 12px; color: #6e7a90; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 480px; }
+  .einsatz-row .e-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+  .nav-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #dce4ee;
+    margin-top: 8px;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 11px 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    color: #fff;
+  }
+  .nav-btn.blue   { background: #0054a6; }
+  .nav-btn.green  { background: #008c50; }
+  .nav-btn.grey   { background: #505a70; }
+
+  /* ═══════════════════════════════════════════
+     EINSATZLISTE SCREEN
+  ═══════════════════════════════════════════ */
+  #liste .header-bar { background: #0054a6; }
+
+  .filter-bar {
+    background: #fff;
+    border-bottom: 1px solid #dce4ee;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+  }
+  .filter-btn.all    { background: #0054a6; color: #fff; }
+  .filter-btn.wt     { background: #e8f0ff; color: #0054a6; }
+  .filter-btn.gwq    { background: #e4f7ed; color: #008c50; }
+  .filter-btn.sgq    { background: #fff0e8; color: #b43c00; }
+  .filter-btn.gma    { background: #f5eaff; color: #781e96; }
+
+  .date-filter {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #6e7a90;
+  }
+  .date-filter input {
+    border: 1px solid #c8d4e8;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: #1e2032;
+  }
+  .btn-new {
+    background: #008c50;
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .einsatz-card {
+    margin: 8px 16px 0;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .einsatz-card .card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .einsatz-card .card-arbnr { font-size: 11px; color: #8899aa; flex: 1; }
+  .einsatz-card .card-main  { font-size: 13px; font-weight: 700; color: #1e2032; }
+  .einsatz-card .card-desc  { font-size: 12px; color: #6e7a90; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+  .einsatz-card .card-row   { display: flex; align-items: flex-start; justify-content: space-between; }
+  .einsatz-card .card-kontakt { font-size: 11px; color: #6e7a90; }
+  .card-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+  .btn-edit { background: #e8f0ff; color: #0054a6; border: none; padding: 5px 12px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .btn-del  { background: #fff0f0; color: #c00; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+
+  /* ═══════════════════════════════════════════
+     FORMULAR SCREEN
+  ═══════════════════════════════════════════ */
+  #formular .header-bar { background: #0054a6; }
+
+  .form-card {
+    margin: 16px;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #3a4870;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    border: 1px solid #b8c4d8;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #1e2032;
+    font-family: inherit;
+    transition: border-color .15s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #0054a6;
+    box-shadow: 0 0 0 3px rgba(0,84,166,.12);
+  }
+  .form-group textarea { resize: vertical; min-height: 64px; }
+
+  .pruefer-section {
+    background: #eef4ff;
+    border: 1px solid rgba(0,84,166,.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 4px 0;
+  }
+  .pruefer-section .ps-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0054a6;
+    margin-bottom: 8px;
+  }
+  .partner-hint {
+    background: #f5f7fa;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #6e7a90;
+    font-style: italic;
+    border-left: 3px solid #c8d4e8;
+  }
+
+  .form-divider { height: 1px; background: #eaeff8; margin: 16px 0; }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    padding: 0 16px 16px;
+  }
+  .btn-save {
+    background: #008c50;
+    color: #fff;
+    padding: 13px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-cancel-form {
+    background: #eaeff8;
+    color: #505a70;
+    padding: 13px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* ═══════════════════════════════════════════
+     TAGESZETTEL SCREEN
+  ═══════════════════════════════════════════ */
+  #tageszettel .header-bar { background: #0054a6; }
+
+  .tz-filter-card {
+    margin: 12px 16px;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .tz-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .tz-row:last-child { margin-bottom: 0; }
+  .tz-label { font-size: 12px; font-weight: 700; color: #3a4870; min-width: 70px; }
+  .tz-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+  }
+  .tz-btn.active-WT  { background: #0054a6; color: #fff; }
+  .tz-btn.active-GWQ { background: #008c50; color: #fff; }
+  .tz-btn.active-SGQ { background: #b43c00; color: #fff; }
+  .tz-btn.active-GMA { background: #781e96; color: #fff; }
+  .tz-btn.inact-WT   { background: #e8f0ff; color: #0054a6; }
+  .tz-btn.inact-GWQ  { background: #e4f7ed; color: #008c50; }
+  .tz-btn.inact-SGQ  { background: #fff0e8; color: #b43c00; }
+  .tz-btn.inact-GMA  { background: #f5eaff; color: #781e96; }
+  .tz-btn.mode-active { background: #0054a6; color: #fff; }
+  .tz-btn.mode-inact  { background: #e8f0ff; color: #0054a6; }
+
+  .tz-preview-header {
+    margin: 0 16px;
+    border-radius: 8px 8px 0 0;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tz-preview-header .tz-ph-title { color: #fff; font-size: 15px; font-weight: 700; }
+  .tz-preview-header .tz-ph-count { color: rgba(255,255,255,.75); font-size: 12px; }
+
+  .tz-preview-list {
+    margin: 0 16px;
+    border: 1px solid #dce4ee;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .tz-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eaeff8;
+  }
+  .tz-item:last-child { border-bottom: none; }
+  .tz-item .ti-date  { font-size: 12px; font-weight: 700; color: #0054a6; margin-bottom: 4px; }
+  .tz-item .ti-arbnr { font-size: 11px; color: #8899aa; margin-bottom: 2px; }
+  .tz-item .ti-ort   { font-size: 13px; color: #1e2032; font-weight: 600; }
+  .tz-item .ti-desc  { font-size: 11px; color: #6e7a90; margin-top: 2px; }
+  .tz-item .ti-kontakt { font-size: 11px; color: #6e7a90; margin-top: 2px; }
+
+  .tz-action-card {
+    margin: 12px 16px;
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .tz-email-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .tz-email-row label { font-size: 12px; font-weight: 700; color: #3a4870; white-space: nowrap; }
+  .tz-email-row input {
+    flex: 1;
+    border: 1px solid #b8c4d8;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .tz-btns { display: flex; gap: 10px; }
+  .btn-send-email {
+    background: #0054a6;
+    color: #fff;
+    padding: 11px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-print {
+    background: #505a70;
+    color: #fff;
+    padding: 11px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tz-hint { font-size: 11px; color: #8899aa; font-style: italic; margin-top: 8px; }
+
+  /* ═══════════════════════════════════════════
+     ADMIN SCREEN
+  ═══════════════════════════════════════════ */
+  #admin .header-bar { background: #323c50; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .stat-card {
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+    color: #fff;
+  }
+  .stat-card .sn { font-size: 36px; font-weight: 800; line-height: 1; }
+  .stat-card .sl { font-size: 12px; opacity: .8; margin-top: 4px; }
+  .sc-WT  { background: #0054a6; }
+  .sc-GWQ { background: #008c50; }
+  .sc-SGQ { background: #b43c00; }
+  .sc-GMA { background: #781e96; }
+
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 16px 12px;
+  }
+  .btn-export { background: #007838; color: #fff; padding: 9px 18px; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .btn-admin-new { background: #0054a6; color: #fff; padding: 9px 18px; border: none; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+  .admin-list-header {
+    padding: 4px 16px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3a4060;
+    border-top: 1px solid #eaeff8;
+  }
+
+  .admin-row {
+    margin: 4px 16px;
+    background: #fff;
+    border: 1px solid #eaeff8;
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .admin-row .ar-main { flex: 1; font-size: 12px; color: #1e2032; font-weight: 600; }
+  .admin-row .ar-sub  { font-size: 11px; color: #8899aa; }
+  .admin-row .ar-btns { display: flex; gap: 4px; }
+  .admin-row .ar-btns button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .ar-edit { background: #e8f0ff; color: #0054a6; }
+  .ar-del  { background: #fff0f0; color: #c00; }
+
+  /* ── Scrollable content ── */
+  .screen-content {
+    max-height: 620px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #c8d4e8 #f5f7fa;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    margin: 32px auto;
+    max-width: 1024px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .legend-item {
+    background: #22283c;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-left: 4px solid;
+  }
+  .legend-item.l-WT  { border-color: #3b80e8; }
+  .legend-item.l-GWQ { border-color: #20c472; }
+  .legend-item.l-SGQ { border-color: #ff7040; }
+  .legend-item.l-GMA { border-color: #c060f0; }
+  .legend-item .li-title { font-size: 14px; font-weight: 700; color: #e0e8ff; }
+  .legend-item .li-desc  { font-size: 12px; color: #8899bb; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">⚙ Einsatzplanung – App Vorschau</h1>
+<p class="page-subtitle">Werkstofftechnik (WT) · GWQ · SGQ · GMA — Power Apps Canvas App</p>
+
+<!-- ── Tab Navigation ── -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showScreen('home',this)">🏠 Home</button>
+  <button class="tab-btn" onclick="showScreen('liste',this)">📋 Einsatzliste</button>
+  <button class="tab-btn" onclick="showScreen('formular',this)">✏ Formular</button>
+  <button class="tab-btn" onclick="showScreen('tageszettel',this)">📄 Tageszettel</button>
+  <button class="tab-btn" onclick="showScreen('admin',this)">⚙ Verwaltung</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     DEVICE FRAME
+════════════════════════════════════════════════════ -->
+<div class="device-frame">
+
+  <!-- ──────────────────────────────────────────────
+       HOME SCREEN
+  ────────────────────────────────────────────── -->
+  <div class="screen active" id="home">
+    <div class="header-bar" style="background:#0054a6;">
+      <div class="title">⚙ Einsatzplanung</div>
+      <div class="subtitle">Tobias Müller</div>
+    </div>
+    <div class="screen-content">
+
+      <div class="greeting-card">
+        <h2>Hallo, Tobias Müller!</h2>
+        <p>Montag, 23. Juni 2025</p>
+      </div>
+
+      <!-- Heute-Info-Box -->
+      <div class="today-box">
+        <div class="big-num">2</div>
+        <div>
+          <div class="today-text">Heute hast du 2 Einsätze geplant.</div>
+          <div class="today-sub">Klicke auf einen Einsatz für Details.</div>
+        </div>
+      </div>
+
+      <div class="section-label">Meine Einsätze heute</div>
+
+      <div class="einsatz-row">
+        <div>
+          <div class="e-main">08:00 – Berlin, Hauptstraße 15</div>
+          <div class="e-sub">Werkstoffprüfung Stahl S355 – Zugversuch und Kerbschlagarbeit</div>
+        </div>
+        <div class="e-right">
+          <span class="firma-chip chip-WT">WT</span>
+          <span style="font-size:11px;color:#8899aa;">WT-2024-001</span>
+        </div>
+      </div>
+
+      <div class="einsatz-row">
+        <div>
+          <div class="e-main">13:30 – Hamburg, Industriepark Nord</div>
+          <div class="e-sub">Ultraschallprüfung Aluminiumblech nach EN 10160</div>
+        </div>
+        <div class="e-right">
+          <span class="firma-chip chip-WT">WT</span>
+          <span style="font-size:11px;color:#8899aa;">WT-2024-002</span>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:12px;">Alle Einsätze heute (4)</div>
+
+      <div class="einsatz-row" style="background:#fafbff;">
+        <div>
+          <div class="e-main" style="font-size:12px;">08:00  WT – Berlin, Hauptstraße 15  |  Herr Schmidt</div>
+          <div class="e-sub">Nr: WT-2024-001  |  Werkstoffprüfung Stahl S355</div>
+        </div>
+      </div>
+      <div class="einsatz-row" style="background:#fafbff;">
+        <div>
+          <div class="e-main" style="font-size:12px;">09:00  GWQ – München, Fabrikstraße 5  |  Herr Müller</div>
+          <div class="e-sub">Nr: GWQ-2024-001  |  Dichtheitstest Rohrsystem DN100</div>
+        </div>
+      </div>
+      <div class="einsatz-row" style="background:#fafbff;">
+        <div>
+          <div class="e-main" style="font-size:12px;">13:30  WT – Hamburg, Industriepark Nord  |  Frau Meyer</div>
+          <div class="e-sub">Nr: WT-2024-002  |  Ultraschallprüfung Aluminiumblech</div>
+        </div>
+      </div>
+
+      <div class="nav-bar">
+        <div class="nav-btn blue">📋 Alle Einsätze</div>
+        <div class="nav-btn green">📄 Tageszettel</div>
+        <div class="nav-btn grey">⚙ Verwaltung</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────
+       EINSATZLISTE SCREEN
+  ────────────────────────────────────────────── -->
+  <div class="screen" id="liste">
+    <div class="header-bar" style="background:#0054a6;">
+      <div class="back-btn">← Zurück</div>
+      <div class="title">Alle Einsätze</div>
+      <div class="subtitle">6 Einträge</div>
+    </div>
+    <div class="screen-content">
+
+      <div class="filter-bar">
+        <button class="filter-btn all">Alle</button>
+        <button class="filter-btn wt">WT</button>
+        <button class="filter-btn gwq">GWQ</button>
+        <button class="filter-btn sgq">SGQ</button>
+        <button class="filter-btn gma">GMA</button>
+        <div class="date-filter">
+          Datum: <input type="date" value="2025-06-23">
+          <span style="color:#c00;cursor:pointer;font-size:12px;">✕</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="btn-new">＋ Neuer Einsatz</div>
+      </div>
+
+      <!-- Einsatz 1 -->
+      <div class="einsatz-card">
+        <div class="card-top">
+          <span class="firma-chip chip-WT">WT</span>
+          <span class="card-arbnr">WT-2024-001</span>
+          <span class="status-badge status-geplant">Geplant</span>
+        </div>
+        <div class="card-main">Mo. 23.06.25  08:00  –  Berlin, Hauptstraße 15</div>
+        <div class="card-row">
+          <div class="card-desc">Werkstoffprüfung Stahl S355 – Zugversuch und Kerbschlagarbeit</div>
+          <div class="card-kontakt">Herr Schmidt  030-111 222 33</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <!-- Einsatz 2 -->
+      <div class="einsatz-card">
+        <div class="card-top">
+          <span class="firma-chip chip-GWQ">GWQ</span>
+          <span class="card-arbnr">GWQ-2024-001</span>
+          <span class="status-badge status-geplant">Geplant</span>
+        </div>
+        <div class="card-main">Mo. 23.06.25  09:00  –  München, Fabrikstraße 5</div>
+        <div class="card-row">
+          <div class="card-desc">Dichtheitstest Rohrsystem DN100</div>
+          <div class="card-kontakt">Herr Müller  089-555 666 77</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <!-- Einsatz 3 -->
+      <div class="einsatz-card">
+        <div class="card-top">
+          <span class="firma-chip chip-WT">WT</span>
+          <span class="card-arbnr">WT-2024-002</span>
+          <span class="status-badge status-geplant">Geplant</span>
+        </div>
+        <div class="card-main">Mo. 23.06.25  13:30  –  Hamburg, Industriepark Nord</div>
+        <div class="card-row">
+          <div class="card-desc">Ultraschallprüfung Aluminiumblech nach EN 10160</div>
+          <div class="card-kontakt">Frau Meyer  040-333 444 55</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <!-- Einsatz 4 -->
+      <div class="einsatz-card">
+        <div class="card-top">
+          <span class="firma-chip chip-SGQ">SGQ</span>
+          <span class="card-arbnr">SGQ-2024-001</span>
+          <span class="status-badge status-geplant">Geplant</span>
+        </div>
+        <div class="card-main">Di. 24.06.25  10:00  –  Frankfurt, Industriering 12</div>
+        <div class="card-row">
+          <div class="card-desc">Qualitätssicherung Schweißnaht WIG nach ISO 5817</div>
+          <div class="card-kontakt">Frau Weber  069-777 888 99</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <!-- Einsatz 5 -->
+      <div class="einsatz-card">
+        <div class="card-top">
+          <span class="firma-chip chip-GMA">GMA</span>
+          <span class="card-arbnr">GMA-2024-001</span>
+          <span class="status-badge status-geplant">Geplant</span>
+        </div>
+        <div class="card-main">Mi. 25.06.25  07:30  –  Stuttgart, Technologiepark Geb. A</div>
+        <div class="card-row">
+          <div class="card-desc">Sichtprüfung Oberflächenbeschichtung nach ISO 12944</div>
+          <div class="card-kontakt">Herr Braun  0711-999 111 22</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <!-- Einsatz 6 (abgeschlossen) -->
+      <div class="einsatz-card" style="opacity:.75;">
+        <div class="card-top">
+          <span class="firma-chip chip-WT">WT</span>
+          <span class="card-arbnr">WT-2024-003</span>
+          <span class="status-badge status-done">Abgeschlossen</span>
+        </div>
+        <div class="card-main">So. 22.06.25  11:00  –  Köln, Chempark, Labor 3</div>
+        <div class="card-row">
+          <div class="card-desc">Härtemessung Rockwell HRC, Stichprobenkontrolle</div>
+          <div class="card-kontakt">Herr Fischer  0221-444 555 66</div>
+        </div>
+        <div class="card-actions"><button class="btn-edit">✎ Bearbeiten</button><button class="btn-del">🗑</button></div>
+      </div>
+
+      <div style="height:16px;"></div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────
+       FORMULAR SCREEN  (WT = Prüfer sichtbar)
+  ────────────────────────────────────────────── -->
+  <div class="screen" id="formular">
+    <div class="header-bar" style="background:#0054a6;">
+      <div class="back-btn">← Abbrechen</div>
+      <div class="title">Neuer Einsatz</div>
+    </div>
+    <div class="screen-content">
+      <div class="form-card">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Arbeitsnummer *</label>
+            <input type="text" placeholder="z. B. WT-2024-007">
+          </div>
+          <div class="form-group">
+            <label>Firma *</label>
+            <select>
+              <option selected>WT</option>
+              <option>GWQ</option>
+              <option>SGQ</option>
+              <option>GMA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Datum *</label>
+            <input type="date" value="2025-06-23">
+          </div>
+          <div class="form-group">
+            <label>Uhrzeit *</label>
+            <input type="text" placeholder="08:00" value="08:00">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select><option>Geplant</option><option>Abgeschlossen</option><option>Abgesagt</option></select>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Ort / Adresse *</label>
+          <input type="text" placeholder="Stadt, Straße, Gebäude">
+        </div>
+
+        <!-- Prüfer-Section (nur WT) -->
+        <div class="pruefer-section" style="margin-bottom:16px;">
+          <div class="ps-label">🔵 WT-Einsatz: Prüfer zuweisen</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Prüfer (E-Mail oder Name)</label>
+              <input type="text" placeholder="tobias.mueller@werkstofftechnik.de">
+            </div>
+          </div>
+        </div>
+
+        <!-- Partnerfirma-Hinweis (nur sichtbar wenn GWQ/SGQ/GMA gewählt) -->
+        <!--
+        <div class="partner-hint" style="margin-bottom:16px;">
+          ⚙ Partnerfirma: Prüfer wird von GWQ selbst bestimmt.
+        </div>
+        -->
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Beschreibung / Aufgabe *</label>
+          <textarea placeholder="Art der Prüfung, Norm, Besonderheiten ..."></textarea>
+        </div>
+
+        <div class="form-grid" style="margin-bottom:4px;">
+          <div class="form-group">
+            <label>Ansprechpartner vor Ort</label>
+            <input type="text" placeholder="Herr / Frau Muster">
+          </div>
+          <div class="form-group">
+            <label>Telefonnummer</label>
+            <input type="text" placeholder="0xx-xxx xxx xx">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-save">✓ Speichern</button>
+        <button class="btn-cancel-form">Abbrechen</button>
+      </div>
+
+      <!-- Gleiche Ansicht aber für GWQ (Prüfer ausgeblendet) -->
+      <div style="margin:0 16px 8px; padding:10px 14px; background:#fffbea; border:1px solid #e8d880; border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;color:#7a6010;margin-bottom:6px;">ℹ So sieht das Formular für GWQ aus (Prüfer-Feld ausgeblendet):</div>
+        <div class="partner-hint">⚙ Partnerfirma: Prüfer wird von GWQ selbst bestimmt. Kein Prüfer-Feld sichtbar.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────
+       TAGESZETTEL SCREEN
+  ────────────────────────────────────────────── -->
+  <div class="screen" id="tageszettel">
+    <div class="header-bar" style="background:#0054a6;">
+      <div class="back-btn">← Zurück</div>
+      <div class="title">Tageszettel / Bericht</div>
+    </div>
+    <div class="screen-content">
+
+      <div class="tz-filter-card">
+        <div class="tz-row">
+          <span class="tz-label">Firma</span>
+          <button class="tz-btn active-WT">WT</button>
+          <button class="tz-btn inact-GWQ">GWQ</button>
+          <button class="tz-btn inact-SGQ">SGQ</button>
+          <button class="tz-btn inact-GMA">GMA</button>
+        </div>
+        <div class="tz-row">
+          <span class="tz-label">Zeitraum</span>
+          <button class="tz-btn mode-active">Tageszettel</button>
+          <button class="tz-btn mode-inact">Wochenzettel</button>
+          <input type="date" value="2025-06-23" style="border:1px solid #b8c4d8;border-radius:6px;padding:6px 10px;font-size:12px;margin-left:8px;">
+        </div>
+      </div>
+
+      <!-- Vorschau Header -->
+      <div class="tz-preview-header" style="background:#0054a6;">
+        <div class="tz-ph-title">WT – Tageszettel 23.06.2025</div>
+        <div class="tz-ph-count">2 Einsätze</div>
+      </div>
+
+      <!-- Vorschau Liste -->
+      <div class="tz-preview-list">
+        <div class="tz-item">
+          <div class="ti-date">Montag, 23.06.2025  08:00 Uhr</div>
+          <div class="ti-arbnr">Nr: WT-2024-001</div>
+          <div class="ti-ort">📍 Berlin, Hauptstraße 15</div>
+          <div class="ti-desc">Werkstoffprüfung Stahl S355 – Zugversuch und Kerbschlagarbeit</div>
+          <div class="ti-kontakt">📞 Herr Schmidt  –  030-111 222 33</div>
+        </div>
+        <div class="tz-item">
+          <div class="ti-date">Montag, 23.06.2025  13:30 Uhr</div>
+          <div class="ti-arbnr">Nr: WT-2024-002</div>
+          <div class="ti-ort">📍 Hamburg, Industriepark Nord, Halle 5</div>
+          <div class="ti-desc">Ultraschallprüfung Aluminiumblech nach EN 10160</div>
+          <div class="ti-kontakt">📞 Frau Meyer  –  040-333 444 55</div>
+        </div>
+      </div>
+
+      <!-- E-Mail & Aktionen -->
+      <div class="tz-action-card">
+        <div class="tz-email-row">
+          <label>E-Mail-Empfänger:</label>
+          <input type="email" placeholder="empfaenger@partnerfirma.de">
+        </div>
+        <div class="tz-btns">
+          <button class="btn-send-email">📧 E-Mail senden</button>
+          <button class="btn-print">🖨 Drucken / PDF</button>
+        </div>
+        <div class="tz-hint">💡 Für PDF-Versand: Power Automate Flow "Einsatzplanung Email" einbinden (Anleitung im README)</div>
+      </div>
+
+      <!-- Wochenzettel-Hinweis -->
+      <div style="margin:0 16px 12px;padding:10px 14px;background:#fffbea;border:1px solid #e8d880;border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;color:#7a6010;margin-bottom:4px;">📅 Wochenzettel-Modus (KW 26):</div>
+        <div style="font-size:12px;color:#7a6010;">Alle Einsätze vom 23.06. – 29.06.2025 werden angezeigt. Mit ◀ ▶ zwischen Kalenderwochen wechseln.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────
+       ADMIN SCREEN
+  ────────────────────────────────────────────── -->
+  <div class="screen" id="admin">
+    <div class="header-bar" style="background:#323c50;">
+      <div class="back-btn">← Zurück</div>
+      <div class="title">⚙ Verwaltung – Alle Einsätze</div>
+    </div>
+    <div class="screen-content">
+
+      <div class="stat-row">
+        <div class="stat-card sc-WT"><div class="sn">3</div><div class="sl">WT</div></div>
+        <div class="stat-card sc-GWQ"><div class="sn">1</div><div class="sl">GWQ</div></div>
+        <div class="stat-card sc-SGQ"><div class="sn">1</div><div class="sl">SGQ</div></div>
+        <div class="stat-card sc-GMA"><div class="sn">1</div><div class="sl">GMA</div></div>
+      </div>
+
+      <div class="admin-actions">
+        <button class="btn-export">📊 Excel Export</button>
+        <button class="btn-admin-new">＋ Neuer Einsatz</button>
+      </div>
+
+      <div class="admin-list-header">Alle Einsätze (6 gesamt)</div>
+
+      <div class="admin-row">
+        <span class="firma-chip chip-WT">WT</span>
+        <div style="flex:1;">
+          <div class="ar-main">23.06.25  08:00  –  Berlin, Hauptstraße 15  |  WT-2024-001</div>
+          <div class="ar-sub">Werkstoffprüfung Stahl S355  |  Prüfer: Tobias Müller</div>
+        </div>
+        <span class="status-badge status-geplant">Geplant</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div class="admin-row">
+        <span class="firma-chip chip-GWQ">GWQ</span>
+        <div style="flex:1;">
+          <div class="ar-main">23.06.25  09:00  –  München, Fabrikstraße 5  |  GWQ-2024-001</div>
+          <div class="ar-sub">Dichtheitstest Rohrsystem DN100</div>
+        </div>
+        <span class="status-badge status-geplant">Geplant</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div class="admin-row">
+        <span class="firma-chip chip-WT">WT</span>
+        <div style="flex:1;">
+          <div class="ar-main">23.06.25  13:30  –  Hamburg, Industriepark Nord  |  WT-2024-002</div>
+          <div class="ar-sub">Ultraschallprüfung Aluminiumblech EN 10160  |  Prüfer: Tobias Müller</div>
+        </div>
+        <span class="status-badge status-geplant">Geplant</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div class="admin-row">
+        <span class="firma-chip chip-SGQ">SGQ</span>
+        <div style="flex:1;">
+          <div class="ar-main">24.06.25  10:00  –  Frankfurt, Industriering 12  |  SGQ-2024-001</div>
+          <div class="ar-sub">Qualitätssicherung Schweißnaht WIG nach ISO 5817</div>
+        </div>
+        <span class="status-badge status-geplant">Geplant</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div class="admin-row">
+        <span class="firma-chip chip-GMA">GMA</span>
+        <div style="flex:1;">
+          <div class="ar-main">25.06.25  07:30  –  Stuttgart, Technologiepark Geb. A  |  GMA-2024-001</div>
+          <div class="ar-sub">Sichtprüfung Oberflächenbeschichtung nach ISO 12944</div>
+        </div>
+        <span class="status-badge status-geplant">Geplant</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div class="admin-row" style="opacity:.75;">
+        <span class="firma-chip chip-WT">WT</span>
+        <div style="flex:1;">
+          <div class="ar-main">22.06.25  11:00  –  Köln, Chempark, Labor 3  |  WT-2024-003</div>
+          <div class="ar-sub">Härtemessung Rockwell HRC  |  Prüfer: Tobias Müller</div>
+        </div>
+        <span class="status-badge status-done">Abgeschlossen</span>
+        <div class="ar-btns"><button class="ar-edit">✎</button><button class="ar-del">🗑</button></div>
+      </div>
+
+      <div style="height:16px;"></div>
+    </div>
+  </div>
+
+</div><!-- /device-frame -->
+
+<!-- ── Firmen-Legende ── -->
+<div class="legend">
+  <div class="legend-item l-WT">
+    <div class="li-title">WT – Werkstofftechnik</div>
+    <div class="li-desc">Eigene Mitarbeiter. Prüfer-Zuweisung durch Disponenten. Volles Formular.</div>
+  </div>
+  <div class="legend-item l-GWQ">
+    <div class="li-title">GWQ – Partnerfirma</div>
+    <div class="li-desc">Kein Prüfer-Feld. Ort, Datum, Zeit, Beschreibung & Ansprechpartner vorgeben.</div>
+  </div>
+  <div class="legend-item l-SGQ">
+    <div class="li-title">SGQ – Partnerfirma</div>
+    <div class="li-desc">Kein Prüfer-Feld. Gleiche Felder wie GWQ.</div>
+  </div>
+  <div class="legend-item l-GMA">
+    <div class="li-title">GMA – Partnerfirma</div>
+    <div class="li-desc">Kein Prüfer-Feld. Gleiche Felder wie GWQ/SGQ.</div>
+  </div>
+</div>
+
+<script>
+  function showScreen(id, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
