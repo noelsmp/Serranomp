@@ -1,0 +1,211 @@
+@page "/portal/dokumente"
+@layout PortalLayout
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Patientenportal – Dokumente</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Class="mr-2" />Dokumente
+</MudText>
+
+<MudTabs Rounded="true" Color="Color.Primary" Class="mb-4">
+
+    <!-- ── Anamnesebogen ── -->
+    <MudTabPanel Text="Anamnesebogen" Icon="@Icons.Material.Filled.Assignment">
+        <MudStack Spacing="3" Class="mt-3">
+            <MudCard Elevation="2" Style="border-radius:12px;">
+                <MudCardContent>
+                    <MudText Typo="Typo.body1"><b>Vorlage herunterladen</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                        Laden Sie den Bogen herunter, füllen Sie ihn aus und laden ihn ausgefüllt wieder hoch.
+                    </MudText>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               OnClick="AnamnesebogenHerunterladen">
+                        Anamnesebogen herunterladen
+                    </MudButton>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Style="border-radius:12px;">
+                <MudCardContent>
+                    <MudText Typo="Typo.body1"><b>Ausgefüllten Bogen hochladen</b></MudText>
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="my-2">
+                        PDF oder Foto (JPG/PNG), max. 10 MB.
+                    </MudAlert>
+                    <InputFile id="anamneseInput" OnChange="@(e => DateiHochladen(e, "anamnesebogen"))"
+                               style="display:none" accept=".pdf,.jpg,.jpeg,.png" />
+                    <label for="anamneseInput"
+                           style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#0ea5e9;color:white;border-radius:4px;font-size:14px;font-weight:500;">
+                        Datei auswählen & hochladen
+                    </label>
+                </MudCardContent>
+            </MudCard>
+
+            @foreach (var d in _anamneseDocs)
+            {
+                <MudCard Elevation="1" Style="border-radius:8px;">
+                    <MudCardContent Class="pa-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.body2"><b>@d.Name</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatDateTime(d.Erstellt)</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => DokumentHerunterladen(d))" />
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    </MudTabPanel>
+
+    <!-- ── Befunde & Blutwerte ── -->
+    <MudTabPanel Text="Befunde & Blutwerte" Icon="@Icons.Material.Filled.Biotech">
+        <MudStack Spacing="3" Class="mt-3">
+            <MudCard Elevation="2" Style="border-radius:12px;">
+                <MudCardContent>
+                    <MudText Typo="Typo.body1" Class="mb-2"><b>Typ wählen und hochladen</b></MudText>
+                    <MudGrid Spacing="2" Class="mb-3">
+                        <MudItem xs="6">
+                            <MudPaper Elevation="@(_uploadTyp == "blutwerte" ? 4 : 1)"
+                                      Style="@($"padding:16px;border-radius:8px;text-align:center;cursor:pointer;border:2px solid {(_uploadTyp == "blutwerte" ? "#0ea5e9" : "transparent")}")"
+                                      @onclick='() => _uploadTyp = "blutwerte"'>
+                                <MudIcon Icon="@Icons.Material.Filled.Bloodtype"
+                                         Color="@(_uploadTyp == "blutwerte" ? Color.Primary : Color.Default)"
+                                         Style="font-size:32px;" />
+                                <MudText Typo="Typo.body2" Class="mt-1">Blutwerte</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudPaper Elevation="@(_uploadTyp == "befund" ? 4 : 1)"
+                                      Style="@($"padding:16px;border-radius:8px;text-align:center;cursor:pointer;border:2px solid {(_uploadTyp == "befund" ? "#0ea5e9" : "transparent")}")"
+                                      @onclick='() => _uploadTyp = "befund"'>
+                                <MudIcon Icon="@Icons.Material.Filled.Description"
+                                         Color="@(_uploadTyp == "befund" ? Color.Primary : Color.Default)"
+                                         Style="font-size:32px;" />
+                                <MudText Typo="Typo.body2" Class="mt-1">Arztbefund</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (_uploadTyp != null)
+                    {
+                        <InputFile id="befundInput" OnChange="@(e => DateiHochladen(e, _uploadTyp))"
+                                   style="display:none" accept=".pdf,.jpg,.jpeg,.png" />
+                        <label for="befundInput"
+                               style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#0ea5e9;color:white;border-radius:4px;font-size:14px;font-weight:500;">
+                            @_uploadTyp hochladen
+                        </label>
+                    }
+
+                    <MudAlert Severity="Severity.Success" Dense="true" Icon="@Icons.Material.Filled.Security" Class="mt-3">
+                        DSGVO-konform: Nur Sie und Ihre Praxis haben Zugriff.
+                    </MudAlert>
+                </MudCardContent>
+            </MudCard>
+
+            @foreach (var d in _befundDocs)
+            {
+                <MudCard Elevation="1" Style="border-radius:8px;">
+                    <MudCardContent Class="pa-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.body2"><b>@d.Name</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @d.Typ · @FormatDateTime(d.Erstellt)
+                                </MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => DokumentHerunterladen(d))" />
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    </MudTabPanel>
+
+    <!-- ── Von der Praxis ── -->
+    <MudTabPanel Text="Von Praxis" Icon="@Icons.Material.Filled.LocalHospital">
+        <MudStack Spacing="3" Class="mt-3">
+            @if (_praxisDocs.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">Noch keine Dokumente von Ihrer Praxis.</MudAlert>
+            }
+            @foreach (var d in _praxisDocs)
+            {
+                <MudCard Elevation="1" Style="border-radius:8px;">
+                    <MudCardContent Class="pa-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.body2"><b>@d.Name</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatDateTime(d.Erstellt)</MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => DokumentHerunterladen(d))" />
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudStack>
+    </MudTabPanel>
+
+</MudTabs>
+
+@if (_uploading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Wird hochgeladen...</MudText>
+}
+
+@code {
+    private List<PortalDokument> _anamneseDocs = [];
+    private List<PortalDokument> _befundDocs   = [];
+    private List<PortalDokument> _praxisDocs   = [];
+    private string? _uploadTyp;
+    private bool _uploading;
+
+    protected override async Task OnInitializedAsync() => await LadeDokumente();
+
+    private async Task LadeDokumente()
+    {
+        var alle = await Supabase.HoleDokumenteAsync();
+        _anamneseDocs = alle.Where(d => d.Typ == "anamnesebogen" && d.UploadedBy == "patient").ToList();
+        _befundDocs   = alle.Where(d => d.Typ is "befund" or "blutwerte").ToList();
+        _praxisDocs   = alle.Where(d => d.UploadedBy == "praxis").ToList();
+    }
+
+    private async Task AnamnesebogenHerunterladen() =>
+        await JS.InvokeVoidAsync("open", "/dokumente/anamnesebogen-vorlage.pdf", "_blank");
+
+    private async Task DateiHochladen(InputFileChangeEventArgs e, string typ)
+    {
+        var datei = e.File;
+        if (datei.Size > 10 * 1024 * 1024)
+        {
+            Snackbar.Add("Datei zu groß (max. 10 MB).", Severity.Error);
+            return;
+        }
+        _uploading = true;
+        StateHasChanged();
+        using var ms = new MemoryStream();
+        await datei.OpenReadStream(10 * 1024 * 1024).CopyToAsync(ms);
+        var name = $"{DateTime.Now:yyyyMMdd-HHmmss}_{datei.Name}";
+        var ok = await Supabase.UploadDokumentAsync(name, typ, ms.ToArray(), datei.ContentType);
+        _uploading = false;
+        if (ok) { Snackbar.Add("Erfolgreich hochgeladen!", Severity.Success); await LadeDokumente(); }
+        else Snackbar.Add("Fehler beim Hochladen.", Severity.Error);
+    }
+
+    private async Task DokumentHerunterladen(PortalDokument d)
+    {
+        var url = await Supabase.GetSignedDownloadUrlAsync(d.StoragePath);
+        if (url == null) { Snackbar.Add("Download nicht verfügbar.", Severity.Error); return; }
+        await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private static string FormatDateTime(string s) =>
+        DateTime.TryParse(s, out var dt) ? dt.ToString("dd.MM.yyyy HH:mm") : s;
+}

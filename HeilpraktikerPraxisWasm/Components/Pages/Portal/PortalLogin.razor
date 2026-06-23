@@ -1,0 +1,75 @@
+@page "/portal/login"
+@layout PortalLayout
+@inject SupabaseService Supabase
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Patientenportal – Anmelden</PageTitle>
+
+<div style="min-height:80vh;display:flex;align-items:center;justify-content:center;">
+    <MudCard Elevation="4" Style="width:100%;max-width:420px;">
+        <MudCardContent Class="pa-6">
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
+                <div style="width:64px;height:64px;background:#0ea5e9;border-radius:16px;display:flex;align-items:center;justify-content:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Style="color:white;font-size:36px;" />
+                </div>
+                <div style="text-align:center;">
+                    <MudText Typo="Typo.h5"><b>Patientenportal</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Melden Sie sich mit Ihren Zugangsdaten an
+                    </MudText>
+                </div>
+            </MudStack>
+
+            <MudTextField @bind-Value="_email" Label="E-Mail-Adresse" Variant="Variant.Outlined"
+                          InputType="InputType.Email" Class="mb-3"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+
+            <MudTextField @bind-Value="_passwort" Label="Passwort" Variant="Variant.Outlined"
+                          InputType="@(_zeigePw ? InputType.Text : InputType.Password)" Class="mb-4"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_zeigePw ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@(() => _zeigePw = !_zeigePw)" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       Size="Size.Large" Disabled="@_laden" OnClick="Login">
+                @(_laden ? "Wird angemeldet..." : "Anmelden")
+            </MudButton>
+
+            <MudDivider Class="my-4" />
+
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Ihre Zugangsdaten erhalten Sie von Ihrer Praxis.
+            </MudAlert>
+        </MudCardContent>
+    </MudCard>
+</div>
+
+@code {
+    private string _email = "";
+    private string _passwort = "";
+    private bool _zeigePw;
+    private bool _laden;
+
+    protected override void OnInitialized()
+    {
+        if (Supabase.IsLoggedIn)
+            Nav.NavigateTo("/portal");
+    }
+
+    private async Task Login()
+    {
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_passwort))
+        {
+            Snackbar.Add("Bitte E-Mail und Passwort eingeben.", Severity.Warning);
+            return;
+        }
+        _laden = true;
+        var (ok, fehler) = await Supabase.LoginAsync(_email, _passwort);
+        _laden = false;
+        if (ok)
+            Nav.NavigateTo("/portal");
+        else
+            Snackbar.Add(fehler ?? "Anmeldung fehlgeschlagen.", Severity.Error);
+    }
+}
