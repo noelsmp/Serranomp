@@ -1,0 +1,102 @@
+@page "/portal/rechnungen"
+@layout PortalLayout
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Patientenportal – Meine Rechnungen</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />Meine Rechnungen
+</MudText>
+
+@if (_laden)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_rechnungen.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Noch keine Rechnungen vorhanden.</MudAlert>
+}
+else
+{
+    <MudStack Spacing="3">
+        @foreach (var r in _rechnungen)
+        {
+            <MudCard Elevation="2" Style="border-radius:12px;">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <div>
+                            <MudText Typo="Typo.subtitle1">
+                                <b>@r.Rechnungsnr</b>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Ausgestellt: @FormatDate(r.Ausstellungsdatum)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Fällig: @FormatDate(r.Faelligkeitsdatum)
+                            </MudText>
+                        </div>
+                        <MudStack AlignItems="AlignItems.End" Spacing="1">
+                            <MudText Typo="Typo.h6" Color="Color.Primary">
+                                <b>@r.Gesamtbetrag.ToString("C2", _deDE)</b>
+                            </MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(r.Bezahlt ? Color.Success : Color.Warning)">
+                                @(r.Bezahlt ? "Bezahlt" : "Offen")
+                            </MudChip>
+                        </MudStack>
+                    </MudStack>
+                </MudCardContent>
+                @if (r.PdfStoragePath != null)
+                {
+                    <MudCardActions>
+                        <MudButton StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                   Color="Color.Primary" Variant="Variant.Text"
+                                   OnClick="@(() => PdfHerunterladen(r))">
+                            PDF herunterladen
+                        </MudButton>
+                    </MudCardActions>
+                }
+            </MudCard>
+        }
+    </MudStack>
+
+    <!-- Summe offene Beträge -->
+    @{
+        var offen = _rechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag);
+    }
+    @if (offen > 0)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mt-3">
+            <b>Offener Betrag:</b> @offen.ToString("C2", _deDE)
+        </MudAlert>
+    }
+}
+
+@code {
+    private List<PortalRechnung> _rechnungen = [];
+    private bool _laden = true;
+    private static readonly System.Globalization.CultureInfo _deDE = new("de-DE");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rechnungen = await Supabase.HoleRechnungenAsync();
+        _laden = false;
+    }
+
+    private async Task PdfHerunterladen(PortalRechnung r)
+    {
+        if (r.PdfStoragePath == null) return;
+        var url = await Supabase.GetSignedDownloadUrlAsync(r.PdfStoragePath);
+        if (url == null) { Snackbar.Add("Download nicht verfügbar.", Severity.Error); return; }
+        await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private static string FormatDate(string s)
+    {
+        if (DateOnly.TryParse(s, out var d))
+            return d.ToString("dd.MM.yyyy");
+        return s;
+    }
+}

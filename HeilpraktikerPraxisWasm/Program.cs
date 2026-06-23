@@ -24,5 +24,7 @@ builder.Services.AddScoped<ZugferdService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<TestdatenSeeder>();
+builder.Services.AddScoped<SupabaseService>();
+builder.Services.AddScoped(_ => new HttpClient());
 
 await builder.Build().RunAsync();
