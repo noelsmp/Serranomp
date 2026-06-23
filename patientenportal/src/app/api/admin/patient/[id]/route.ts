@@ -12,17 +12,16 @@ export async function GET(
     await requireAdmin()
     const { id } = await params
 
-    const patient = db.select().from(benutzer).where(eq(benutzer.id, id)).get()
+    const [patient] = await db.select().from(benutzer).where(eq(benutzer.id, id))
     if (!patient || patient.rolle !== 'patient') {
       return NextResponse.json({ error: 'Patient nicht gefunden.' }, { status: 404 })
     }
 
-    const patientDokumente = db
+    const patientDokumente = await db
       .select()
       .from(dokumente)
       .where(eq(dokumente.patientId, id))
       .orderBy(desc(dokumente.erstellt))
-      .all()
 
     const { passwortHash: _, ...patientOhneHash } = patient
     return NextResponse.json({ patient: patientOhneHash, dokumente: patientDokumente })

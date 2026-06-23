@@ -13,8 +13,9 @@ export default async function PatientenPage({
   searchParams: Promise<{ filter?: string }>
 }) {
   const { filter } = await searchParams
-  const alleRegistrierungen = db.select().from(registrierungen).all()
-  const allePatienten = db.select().from(benutzer).where(eq(benutzer.rolle, 'patient')).all()
+  const alleRegistrierungen = await db.select().from(registrierungen)
+  const allePatienten = await db.select().from(benutzer).where(eq(benutzer.rolle, 'patient'))
+  const alleDokumente = await db.select({ patientId: dokumente.patientId }).from(dokumente)
   const ausstehend = alleRegistrierungen.filter(r => r.status === 'ausstehend')
 
   const zeigeAusstehend = filter === 'ausstehend' || filter === undefined
@@ -117,7 +118,7 @@ export default async function PatientenPage({
                   </thead>
                   <tbody>
                     {allePatienten.map(p => {
-                      const anzahlDok = db.select().from(dokumente).where(eq(dokumente.patientId, p.id)).all().length
+                      const anzahlDok = alleDokumente.filter(d => d.patientId === p.id).length
                       return (
                         <tr key={p.id} className="border-b border-border last:border-0 hover:bg-cream">
                           <td className="py-3 px-4">

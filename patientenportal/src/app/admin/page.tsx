@@ -8,9 +8,9 @@ import Link from 'next/link'
 import { formatDatumZeit } from '@/types'
 
 export default async function AdminDashboardPage() {
-  const allePatienten = db.select().from(benutzer).where(eq(benutzer.rolle, 'patient')).all()
-  const ausstehend = db.select().from(registrierungen).where(eq(registrierungen.status, 'ausstehend')).all()
-  const alleDokumente = db.select().from(dokumente).all()
+  const allePatienten = await db.select().from(benutzer).where(eq(benutzer.rolle, 'patient'))
+  const ausstehend = await db.select().from(registrierungen).where(eq(registrierungen.status, 'ausstehend'))
+  const alleDokumente = await db.select().from(dokumente)
 
   return (
     <div className="space-y-6">

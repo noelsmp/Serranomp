@@ -20,29 +20,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const daten = schema.parse(body)
 
-    // Prüfen ob E-Mail bereits registriert
-    const existing = db.select().from(registrierungen).where(eq(registrierungen.email, daten.email)).get()
-    if (existing) {
-      if (existing.status === 'ausstehend') {
+    const existing = await db.select().from(registrierungen).where(eq(registrierungen.email, daten.email))
+    if (existing.length > 0) {
+      const reg = existing[0]
+      if (reg.status === 'ausstehend') {
         return NextResponse.json({ error: 'Eine Registrierungsanfrage für diese E-Mail-Adresse ist bereits in Bearbeitung.' }, { status: 409 })
       }
-      if (existing.status === 'freigeschaltet') {
+      if (reg.status === 'freigeschaltet') {
         return NextResponse.json({ error: 'Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an.' }, { status: 409 })
       }
     }
 
     const token = nanoid(32)
-    const id = nanoid()
-
-    db.insert(registrierungen).values({
-      id,
+    await db.insert(registrierungen).values({
+      id: nanoid(),
       ...daten,
       datenschutzZugestimmt: true,
       nutzungsbedingungenZugestimmt: true,
       token,
-    }).run()
+    })
 
-    // E-Mail an Heilpraktikerin
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
     const praxisEmail = process.env.EMAIL_PRAXIS ?? 'info@naturheilpraxis-hilfreich.de'
 

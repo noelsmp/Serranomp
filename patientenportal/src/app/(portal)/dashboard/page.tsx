@@ -11,8 +11,8 @@ export default async function DashboardPage() {
   const nutzer = await getSession()
   if (!nutzer) return null
 
-  const meineDokumente = db.select().from(dokumente).where(eq(dokumente.patientId, nutzer.id)).all()
-  const meineRechnungen = db.select().from(rechnungen).where(eq(rechnungen.patientId, nutzer.id)).all()
+  const meineDokumente = await db.select().from(dokumente).where(eq(dokumente.patientId, nutzer.id))
+  const meineRechnungen = await db.select().from(rechnungen).where(eq(rechnungen.patientId, nutzer.id))
 
   const offeneRechnungen = meineRechnungen.filter(r => !r.bezahlt)
   const neueDokumente = meineDokumente

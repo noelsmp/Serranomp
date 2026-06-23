@@ -8,12 +8,11 @@ export async function GET() {
   const nutzer = await getSession()
   if (!nutzer) return NextResponse.json({ error: 'Nicht angemeldet.' }, { status: 401 })
 
-  const meineDokumente = db
+  const meineDokumente = await db
     .select()
     .from(dokumente)
     .where(eq(dokumente.patientId, nutzer.id))
     .orderBy(desc(dokumente.erstellt))
-    .all()
 
   return NextResponse.json({ dokumente: meineDokumente, patientId: nutzer.id })
 }

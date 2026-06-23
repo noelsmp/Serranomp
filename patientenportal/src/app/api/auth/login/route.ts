@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { email, passwort } = schema.parse(body)
 
-    const nutzer = db.select().from(benutzer).where(eq(benutzer.email, email.toLowerCase())).get()
+    const [nutzer] = await db.select().from(benutzer).where(eq(benutzer.email, email.toLowerCase()))
 
     if (!nutzer) {
       return NextResponse.json({ error: 'E-Mail-Adresse oder Passwort ist nicht korrekt.' }, { status: 401 })
@@ -29,20 +29,13 @@ export async function POST(req: NextRequest) {
 
     const korrekt = await pruefePasswort(passwort, nutzer.passwortHash)
     if (!korrekt) {
-      logAktion({ aktion: 'login_fehlgeschlagen', details: { email }, ipAdresse: req.headers.get('x-forwarded-for') ?? undefined })
+      await logAktion({ aktion: 'login_fehlgeschlagen', details: { email }, ipAdresse: req.headers.get('x-forwarded-for') ?? undefined })
       return NextResponse.json({ error: 'E-Mail-Adresse oder Passwort ist nicht korrekt.' }, { status: 401 })
     }
 
     await erstelleSession(nutzer.id)
-
-    logAktion({
-      userId: nutzer.id,
-      aktion: 'login',
-      ipAdresse: req.headers.get('x-forwarded-for') ?? undefined,
-    })
-
-    // Letzten Login aktualisieren
-    db.update(benutzer).set({ letzterLogin: new Date().toISOString() }).where(eq(benutzer.id, nutzer.id)).run()
+    await logAktion({ userId: nutzer.id, aktion: 'login', ipAdresse: req.headers.get('x-forwarded-for') ?? undefined })
+    await db.update(benutzer).set({ letzterLogin: new Date().toISOString() }).where(eq(benutzer.id, nutzer.id))
 
     return NextResponse.json({
       rolle: nutzer.rolle,

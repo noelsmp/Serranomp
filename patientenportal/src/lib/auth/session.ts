@@ -12,12 +12,7 @@ export async function erstelleSession(userId: string): Promise<string> {
   const token = nanoid(64)
   const ablauf = new Date(Date.now() + SESSION_TIMEOUT).toISOString()
 
-  db.insert(sessions).values({
-    id: nanoid(),
-    userId,
-    token,
-    ablauf,
-  }).run()
+  await db.insert(sessions).values({ id: nanoid(), userId, token, ablauf })
 
   const cookieStore = await cookies()
   cookieStore.set(COOKIE_NAME, token, {
@@ -34,27 +29,19 @@ export async function erstelleSession(userId: string): Promise<string> {
 export async function getSession(): Promise<Benutzer | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
-
   if (!token) return null
 
   const jetzt = new Date().toISOString()
 
-  // Abgelaufene Sessions bereinigen
-  db.delete(sessions).where(lt(sessions.ablauf, jetzt)).run()
+  await db.delete(sessions).where(lt(sessions.ablauf, jetzt))
 
-  const session = db
-    .select()
-    .from(sessions)
-    .where(eq(sessions.token, token))
-    .get()
-
+  const [session] = await db.select().from(sessions).where(eq(sessions.token, token))
   if (!session || session.ablauf < jetzt) return null
 
-  // Session verlängern (Sliding Window)
   const neuerAblauf = new Date(Date.now() + SESSION_TIMEOUT).toISOString()
-  db.update(sessions).set({ ablauf: neuerAblauf }).where(eq(sessions.token, token)).run()
+  await db.update(sessions).set({ ablauf: neuerAblauf }).where(eq(sessions.token, token))
 
-  const nutzer = db.select().from(benutzer).where(eq(benutzer.id, session.userId)).get()
+  const [nutzer] = await db.select().from(benutzer).where(eq(benutzer.id, session.userId))
   if (!nutzer || nutzer.status !== 'aktiv') return null
 
   return nutzer
@@ -63,26 +50,18 @@ export async function getSession(): Promise<Benutzer | null> {
 export async function loescheSession(): Promise<void> {
   const cookieStore = await cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
-
-  if (token) {
-    db.delete(sessions).where(eq(sessions.token, token)).run()
-  }
-
+  if (token) await db.delete(sessions).where(eq(sessions.token, token))
   cookieStore.delete(COOKIE_NAME)
 }
 
 export async function requireSession(): Promise<Benutzer> {
   const nutzer = await getSession()
-  if (!nutzer) {
-    throw new Error('NICHT_ANGEMELDET')
-  }
+  if (!nutzer) throw new Error('NICHT_ANGEMELDET')
   return nutzer
 }
 
 export async function requireAdmin(): Promise<Benutzer> {
   const nutzer = await requireSession()
-  if (nutzer.rolle !== 'admin') {
-    throw new Error('KEIN_ZUGRIFF')
-  }
+  if (nutzer.rolle !== 'admin') throw new Error('KEIN_ZUGRIFF')
   return nutzer
 }

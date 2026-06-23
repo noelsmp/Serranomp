@@ -11,27 +11,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const nutzer = await getSession()
-  if (!nutzer) {
-    return NextResponse.json({ error: 'Nicht angemeldet.' }, { status: 401 })
-  }
+  if (!nutzer) return NextResponse.json({ error: 'Nicht angemeldet.' }, { status: 401 })
 
   const { id } = await params
-  const dokument = db.select().from(dokumente).where(eq(dokumente.id, id)).get()
+  const [dokument] = await db.select().from(dokumente).where(eq(dokumente.id, id))
 
-  if (!dokument) {
-    return NextResponse.json({ error: 'Dokument nicht gefunden.' }, { status: 404 })
-  }
+  if (!dokument) return NextResponse.json({ error: 'Dokument nicht gefunden.' }, { status: 404 })
+  if (nutzer.rolle !== 'admin' && dokument.patientId !== nutzer.id) return NextResponse.json({ error: 'Kein Zugriff.' }, { status: 403 })
+  if (!dateiExistiert(dokument.dateipfad)) return NextResponse.json({ error: 'Datei nicht gefunden.' }, { status: 404 })
 
-  // Zugriffskontrolle: Patient nur eigene Dokumente, Admin alle
-  if (nutzer.rolle !== 'admin' && dokument.patientId !== nutzer.id) {
-    return NextResponse.json({ error: 'Kein Zugriff.' }, { status: 403 })
-  }
-
-  if (!dateiExistiert(dokument.dateipfad)) {
-    return NextResponse.json({ error: 'Datei nicht gefunden.' }, { status: 404 })
-  }
-
-  logAktion({
+  await logAktion({
     userId: nutzer.id,
     aktion: 'dokument_heruntergeladen',
     details: { dokumentId: id, dateiname: dokument.name },
@@ -45,7 +34,7 @@ export async function GET(
       'Content-Type': dokument.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(dokument.name)}"`,
       'Content-Length': dateiinhalt.length.toString(),
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
     },
   })

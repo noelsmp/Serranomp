@@ -11,12 +11,11 @@ export default async function RechnungenPage() {
   const nutzer = await getSession()
   if (!nutzer) return null
 
-  const meineRechnungen = db
+  const meineRechnungen = await db
     .select()
     .from(rechnungen)
     .where(eq(rechnungen.patientId, nutzer.id))
     .orderBy(desc(rechnungen.ausstellungsdatum))
-    .all()
 
   const gesamtOffen = meineRechnungen
     .filter(r => !r.bezahlt)
