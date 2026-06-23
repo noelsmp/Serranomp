@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { clsx } from 'clsx'
 import { FileText, Receipt, LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
@@ -32,8 +31,7 @@ export function Navigation({ vorname, nachname, rolle }: NavigationProps) {
   const links = rolle === 'admin' ? adminLinks : patientLinks
 
   async function abmelden() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
     router.refresh()
   }

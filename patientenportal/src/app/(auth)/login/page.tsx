@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
@@ -20,17 +19,15 @@ export default function LoginPage() {
     setLaden(true)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password: passwort })
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, passwort }),
+      })
+      const data = await res.json()
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setFehler('E-Mail-Adresse oder Passwort ist nicht korrekt.')
-        } else if (error.message.includes('Email not confirmed')) {
-          setFehler('Bitte bestätigen Sie zunächst Ihre E-Mail-Adresse.')
-        } else {
-          setFehler('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
-        }
+      if (!res.ok) {
+        setFehler(data.error ?? 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
         return
       }
 
