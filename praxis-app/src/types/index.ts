@@ -121,3 +121,34 @@ export interface PraxisDaten {
   logo?: string;
   heilpraktikerErlaubnis?: string;
 }
+
+export interface PortalZugang {
+  id?: number;
+  patientId: number;
+  pinHash: string;
+  aktiv: boolean;
+  erstellt: string;
+  letzterLogin?: string;
+  einwilligungDsgvo: boolean;
+  einwilligungDsgvoDatum?: string;
+}
+
+export interface PortalDokument {
+  id?: number;
+  patientId: number;
+  name: string;
+  typ: string;
+  kategorie: 'Anamnesebogen' | 'Befund' | 'Bild' | 'Labor' | 'Sonstiges';
+  hochgeladenVon: 'patient' | 'praxis';
+  beschreibung?: string;
+  daten: string;
+  groesse: number;
+  erstellt: string;
+}
+
+export interface PortalSession {
+  patientId: number;
+  patientNr: string;
+  vorname: string;
+  nachname: string;
+}
