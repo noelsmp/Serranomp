@@ -69,6 +69,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
+// Root redirect
+app.MapGet("/", () => Results.Redirect("/login"));
+
 // Map Minimal API endpoints
 app.MapAuthEndpoints();
 app.MapDownloadEndpoints();
