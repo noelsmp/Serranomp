@@ -44,7 +44,7 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
+    [SupplyParameterFromForm(FormName = "login")]
     private LoginInput Input { get; set; } = new();
 
     [SupplyParameterFromQuery(Name = "passwort-geaendert")]

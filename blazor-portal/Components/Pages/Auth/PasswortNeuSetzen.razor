@@ -44,7 +44,7 @@ else
 }
 
 @code {
-    [SupplyParameterFromForm]
+    [SupplyParameterFromForm(FormName = "passwort-neu-setzen")]
     private PasswortNeuSetzenInput Input { get; set; } = new();
 
     [SupplyParameterFromQuery(Name = "token")]
