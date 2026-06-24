@@ -1,0 +1,100 @@
+@page "/passwort-vergessen"
+@layout AuthLayout
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AppDbContext Db
+@inject EmailService EmailSvc
+@inject IConfiguration Config
+
+<PageTitle>Passwort vergessen – Patientenportal</PageTitle>
+
+<h2>Passwort vergessen</h2>
+
+@if (gesendet)
+{
+    <div class="alert alert-success">
+        <strong>E-Mail wurde gesendet.</strong>
+        <p>Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen Ihres Passworts gesendet. Bitte prüfen Sie auch Ihren Spam-Ordner.</p>
+        <p>Der Link ist 1 Stunde gültig.</p>
+    </div>
+    <div class="auth-links">
+        <a href="/login">Zurück zur Anmeldung</a>
+    </div>
+}
+else
+{
+    <p>Geben Sie Ihre E-Mail-Adresse ein. Falls ein Konto existiert, senden wir Ihnen einen Link zum Zurücksetzen Ihres Passworts.</p>
+
+    <form method="post" @formname="passwort-vergessen">
+        <AntiforgeryToken />
+        <div class="form-group">
+            <label for="email">E-Mail-Adresse</label>
+            <input id="email" type="email" name="Input.Email" value="@Input.Email"
+                   class="form-control" required autocomplete="email" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Link anfordern</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="/login">Zurück zur Anmeldung</a>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "passwort-vergessen")]
+    private PasswortVergessenInput Input { get; set; } = new();
+
+    private bool gesendet;
+
+    private static string NewId() => Guid.NewGuid().ToString("N")[..21];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext == null) return;
+        if (httpContext.Request.Method == "POST")
+            await HandlePasswortVergessen();
+    }
+
+    private async Task HandlePasswortVergessen()
+    {
+        if (string.IsNullOrWhiteSpace(Input.Email))
+        {
+            gesendet = true;
+            return;
+        }
+
+        var benutzer = Db.Benutzer.FirstOrDefault(b =>
+            b.Email.ToLower() == Input.Email.ToLower().Trim());
+
+        if (benutzer != null && benutzer.Status == "aktiv")
+        {
+            // Remove existing tokens for this user
+            var oldTokens = Db.PasswortResetTokens.Where(t => t.UserId == benutzer.Id);
+            Db.PasswortResetTokens.RemoveRange(oldTokens);
+
+            var token = NewId() + NewId() + NewId();
+            var resetToken = new Data.Models.PasswortResetToken
+            {
+                Id = NewId(),
+                UserId = benutzer.Id,
+                Token = token,
+                Ablauf = DateTime.UtcNow.AddHours(1),
+                Erstellt = DateTime.UtcNow
+            };
+            Db.PasswortResetTokens.Add(resetToken);
+            await Db.SaveChangesAsync();
+
+            var appUrl = Config["AppUrl"] ?? "https://portal.seo-smp.de";
+            var resetLink = $"{appUrl}/passwort-neu-setzen?token={token}";
+            await EmailSvc.SendPasswortReset(benutzer.Email, benutzer.Vorname, resetLink);
+        }
+
+        // Always show the same message to prevent user enumeration
+        gesendet = true;
+    }
+
+    private class PasswortVergessenInput
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+}

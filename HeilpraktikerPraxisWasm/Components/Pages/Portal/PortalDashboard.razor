@@ -1,0 +1,69 @@
+@page "/portal"
+@layout PortalLayout
+@inject SupabaseService Supabase
+@inject NavigationManager Nav
+
+<PageTitle>Patientenportal – Übersicht</PageTitle>
+
+<MudStack Spacing="4">
+    <!-- Begrüßung -->
+    <MudPaper Elevation="0" Style="background:linear-gradient(135deg,#0ea5e9,#0284c7);border-radius:16px;padding:24px;color:white;">
+        <MudText Typo="Typo.h5"><b>Willkommen,</b></MudText>
+        <MudText Typo="Typo.h6">@(Supabase.Profil?.VollerName ?? Supabase.CurrentUser?.Email)</MudText>
+        <MudText Typo="Typo.body2" Style="opacity:0.85;margin-top:4px;">
+            Ihr persönliches Patientenportal
+        </MudText>
+    </MudPaper>
+
+    <!-- Kacheln -->
+    <MudGrid Spacing="3">
+        <MudItem xs="6">
+            <MudCard Elevation="2" Style="cursor:pointer;border-radius:12px;"
+                     @onclick='() => Nav.NavigateTo("/portal/rechnungen")'>
+                <MudCardContent Class="pa-4" Style="text-align:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="Color.Primary"
+                             Style="font-size:40px;" />
+                    <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Rechnungen</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Herunterladen</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="6">
+            <MudCard Elevation="2" Style="cursor:pointer;border-radius:12px;"
+                     @onclick='() => Nav.NavigateTo("/portal/dokumente")'>
+                <MudCardContent Class="pa-4" Style="text-align:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Primary"
+                             Style="font-size:40px;" />
+                    <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Dokumente</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Upload & Download</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="6">
+            <MudCard Elevation="2" Style="cursor:pointer;border-radius:12px;"
+                     @onclick='() => Nav.NavigateTo("/portal/profil")'>
+                <MudCardContent Class="pa-4" Style="text-align:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary"
+                             Style="font-size:40px;" />
+                    <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Mein Profil</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Daten & DSGVO</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="6">
+            <MudCard Elevation="2" Style="border-radius:12px;background:#f0fdf4;">
+                <MudCardContent Class="pa-4" Style="text-align:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Style="font-size:40px;color:#15803d;" />
+                    <MudText Typo="Typo.subtitle1" Class="mt-2"><b>Datenschutz</b></MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">DSGVO-konform</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Hinweis -->
+    <MudAlert Severity="Severity.Success" Icon="@Icons.Material.Filled.Lock">
+        <b>Ihre Daten sind sicher:</b> Alle Informationen sind verschlüsselt gespeichert.
+        Nur Sie haben Zugriff auf Ihre eigenen Daten.
+    </MudAlert>
+</MudStack>

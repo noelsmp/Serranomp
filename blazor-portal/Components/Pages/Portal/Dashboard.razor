@@ -1,0 +1,128 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@layout PortalLayout
+@attribute [Authorize]
+@inject AppDbContext Db
+
+<PageTitle>Übersicht – Patientenportal</PageTitle>
+
+@if (laden)
+{
+    <div class="loading">Laden...</div>
+}
+else
+{
+    <div class="page-header">
+        <h1>Willkommen, @vorname!</h1>
+        <p class="text-muted">Hier finden Sie alle Ihre Dokumente und Rechnungen.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">@dokumentCount</div>
+            <div class="stat-label">Dokumente</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">@rechnungCount</div>
+            <div class="stat-label">Rechnungen</div>
+        </div>
+        <div class="stat-card @(offeneRechnungen > 0 ? "stat-card-warning" : "")">
+            <div class="stat-number">@offeneRechnungen</div>
+            <div class="stat-label">Offene Rechnungen</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-header">
+                <h2>Neueste Dokumente</h2>
+                <a href="/dokumente" class="btn btn-sm btn-outline">Alle anzeigen</a>
+            </div>
+            <div class="card-body">
+                @if (neueDokumente.Count == 0)
+                {
+                    <p class="text-muted">Keine Dokumente vorhanden.</p>
+                }
+                else
+                {
+                    <ul class="doc-list">
+                        @foreach (var doc in neueDokumente)
+                        {
+                            <li class="doc-item">
+                                <div class="doc-info">
+                                    <span class="doc-name">@doc.Name</span>
+                                    <span class="doc-meta">
+                                        <span class="badge badge-@doc.Kategorie">@KategorieName(doc.Kategorie)</span>
+                                        &bull; @doc.Erstellt.ToString("dd.MM.yyyy")
+                                    </span>
+                                </div>
+                                <a href="/api/download/@doc.Id" class="btn btn-sm btn-outline" target="_blank">
+                                    Herunterladen
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Dokument hochladen</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Laden Sie Dokumente hoch, die Sie Ihrer Praxis zur Verfügung stellen möchten.</p>
+                <a href="/dokumente" class="btn btn-primary">Zu Dokumente</a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? userId;
+    private string vorname = string.Empty;
+    private bool laden = true;
+    private int dokumentCount;
+    private int rechnungCount;
+    private int offeneRechnungen;
+    private List<Dokument> neueDokumente = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        vorname = state.User.FindFirst("vorname")?.Value ?? "Patient";
+
+        if (userId != null)
+            await LadeDashboard();
+    }
+
+    private async Task LadeDashboard()
+    {
+        dokumentCount = await System.Threading.Tasks.Task.Run(() =>
+            Db.Dokumente.Count(d => d.PatientId == userId));
+        rechnungCount = await System.Threading.Tasks.Task.Run(() =>
+            Db.Rechnungen.Count(r => r.PatientId == userId));
+        offeneRechnungen = await System.Threading.Tasks.Task.Run(() =>
+            Db.Rechnungen.Count(r => r.PatientId == userId && !r.Bezahlt));
+        neueDokumente = await System.Threading.Tasks.Task.Run(() =>
+            Db.Dokumente
+                .Where(d => d.PatientId == userId)
+                .OrderByDescending(d => d.Erstellt)
+                .Take(3)
+                .ToList());
+        laden = false;
+    }
+
+    private static string KategorieName(string k) => k switch
+    {
+        "rechnung" => "Rechnung",
+        "anamnesebogen" => "Anamnesebogen",
+        "behandlung" => "Behandlung",
+        "vorlage" => "Vorlage",
+        _ => "Sonstiges"
+    };
+}

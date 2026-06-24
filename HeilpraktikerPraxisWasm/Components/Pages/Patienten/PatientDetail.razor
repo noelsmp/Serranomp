@@ -1,0 +1,191 @@
+@page "/patienten/{Id:int}"
+@inject PatientenService PatientenSvc
+@inject TerminService TerminSvc
+@inject BehandlungsService BehandlungsSvc
+@inject RechnungsService RechnungsSvc
+@inject DokumentService DokumentSvc
+@inject NavigationManager Nav
+
+<PageTitle>Patient</PageTitle>
+
+@if (_patient is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => Nav.NavigateTo("/patienten"))" />
+            <div>
+                <MudText Typo="Typo.h5">@_patient.Anrede @_patient.Vorname @_patient.Nachname</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@_patient.PatientNr</MudText>
+            </div>
+        </MudStack>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Edit"
+                   OnClick="@(() => Nav.NavigateTo($"/patienten/{Id}/bearbeiten"))">
+            Bearbeiten
+        </MudButton>
+    </MudStack>
+
+    <MudGrid Spacing="3">
+        <!-- Info-Karten -->
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudList T="string" Dense="true">
+                        <MudListItem Icon="@Icons.Material.Filled.Cake">
+                            Geb.: @(_patient.Geburtsdatum?.ToString("dd.MM.yyyy") ?? "–") (@_patient.Alter)
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Home">
+                            @_patient.Strasse, @_patient.Plz @_patient.Ort
+                        </MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Phone">@_patient.Telefon</MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Email">@_patient.Email</MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.HealthAndSafety">
+                            @_patient.Versicherungsart @(!string.IsNullOrEmpty(_patient.Krankenkasse) ? $"– {_patient.Krankenkasse}" : "")
+                        </MudListItem>
+                        @if (!string.IsNullOrEmpty(_patient.Beruf))
+                        {
+                            <MudListItem Icon="@Icons.Material.Filled.Work">@_patient.Beruf</MudListItem>
+                        }
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+
+            @if (!string.IsNullOrEmpty(_patient.Anamnese))
+            {
+                <MudCard Elevation="2" Class="mt-3">
+                    <MudCardHeader>
+                        <CardHeaderContent><MudText Typo="Typo.subtitle2">Anamnese</MudText></CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2">@_patient.Anamnese</MudText>
+                    </MudCardContent>
+                </MudCard>
+            }
+            @if (!string.IsNullOrEmpty(_patient.Allergien))
+            {
+                <MudAlert Severity="Severity.Warning" Class="mt-3">
+                    <b>Allergien:</b> @_patient.Allergien
+                </MudAlert>
+            }
+            @if (!string.IsNullOrEmpty(_patient.Dauermedikamente))
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-3">
+                    <b>Dauermedikamente:</b> @_patient.Dauermedikamente
+                </MudAlert>
+            }
+        </MudItem>
+
+        <!-- Tabs: Termine, Behandlungen, Rechnungen -->
+        <MudItem xs="12" md="8">
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+                <MudTabPanel Text="Termine" Icon="@Icons.Material.Filled.CalendarMonth">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="pa-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Href="@($"/termine/neu?patientId={Id}")">
+                            Neuer Termin
+                        </MudButton>
+                    </MudStack>
+                    <MudTable Items="@_termine" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Datum</MudTh><MudTh>Art</MudTh><MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="t">
+                            <MudTd>@t.Datum.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                            <MudTd>@t.Art</MudTd>
+                            <MudTd><MudChip T="string" Size="Size.Small">@t.Status</MudChip></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Behandlungen" Icon="@Icons.Material.Filled.MedicalServices">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="pa-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Href="@($"/behandlungen/neu?patientId={Id}")">
+                            Neue Behandlung
+                        </MudButton>
+                    </MudStack>
+                    @foreach (var b in _behandlungen)
+                    {
+                        <MudCard Class="ma-3" Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@b.Datum.ToString("dd.MM.yyyy")</MudText>
+                                <MudText Typo="Typo.body2"><b>Diagnose:</b> @b.Diagnose</MudText>
+                                <MudText Typo="Typo.body2"><b>Therapie:</b> @b.Therapie</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </MudTabPanel>
+
+                <MudTabPanel Text="Rechnungen" Icon="@Icons.Material.Filled.Receipt">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="pa-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Href="@($"/rechnungen/neu?patientId={Id}")">
+                            Neue Rechnung
+                        </MudButton>
+                    </MudStack>
+                    <MudTable Items="@_rechnungen" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Nummer</MudTh><MudTh>Datum</MudTh><MudTh>Betrag</MudTh><MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="r">
+                            <MudTd>@r.Rechnungsnr</MudTd>
+                            <MudTd>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</MudTd>
+                            <MudTd>@r.Gesamtbetrag.ToString("C2", new System.Globalization.CultureInfo("de-DE"))</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(r.Bezahlt ? Color.Success : Color.Warning)">
+                                    @(r.Bezahlt ? "Bezahlt" : "Offen")
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Dokumente" Icon="@Icons.Material.Filled.Folder">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="pa-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Upload"
+                                   Href="@($"/dokumente/neu?patientId={Id}")">
+                            Hochladen
+                        </MudButton>
+                    </MudStack>
+                    <MudTable Items="@_dokumente" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh><MudTh>Kategorie</MudTh><MudTh>Datum</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="d">
+                            <MudTd>@d.Name</MudTd>
+                            <MudTd>@d.Kategorie</MudTd>
+                            <MudTd>@d.Erstellt.ToString("dd.MM.yyyy")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Patient? _patient;
+    private List<Termin> _termine = [];
+    private List<Behandlung> _behandlungen = [];
+    private List<Rechnung> _rechnungen = [];
+    private List<Dokument> _dokumente = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _patient = await PatientenSvc.GetPatientAsync(Id);
+        _termine = await TerminSvc.TermineFuerPatientAsync(Id);
+        _behandlungen = await BehandlungsSvc.AlleBehandlungenAsync(Id);
+        _rechnungen = await RechnungsSvc.RechnungenFuerPatientAsync(Id);
+        _dokumente = await DokumentSvc.AlleDokumenteAsync(Id);
+    }
+}

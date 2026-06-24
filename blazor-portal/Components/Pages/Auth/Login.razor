@@ -1,0 +1,141 @@
+@page "/login"
+@layout AuthLayout
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+@inject AppDbContext Db
+
+<PageTitle>Anmelden – Patientenportal</PageTitle>
+
+<h2>Anmelden</h2>
+
+@if (passwortGeaendert)
+{
+    <div class="alert alert-success">
+        Ihr Passwort wurde erfolgreich geändert. Bitte melden Sie sich jetzt an.
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(fehler))
+{
+    <div class="alert alert-error">@fehler</div>
+}
+
+<form method="post" @formname="login">
+    <AntiforgeryToken />
+    <div class="form-group">
+        <label for="email">E-Mail-Adresse</label>
+        <input id="email" type="email" name="Input.Email" value="@Input.Email"
+               class="form-control" required autocomplete="email" />
+    </div>
+    <div class="form-group">
+        <label for="passwort">Passwort</label>
+        <input id="passwort" type="password" name="Input.Passwort"
+               class="form-control" required autocomplete="current-password" />
+    </div>
+    <button type="submit" class="btn btn-primary btn-full">Anmelden</button>
+</form>
+
+<div class="auth-links">
+    <a href="/passwort-vergessen">Passwort vergessen?</a>
+    <span class="separator">|</span>
+    <a href="/registrierung">Noch kein Konto? Registrieren</a>
+</div>
+
+<div class="portal-features">
+    <h3>Ihr digitales Patientenportal</h3>
+    <ul>
+        <li>📄 Dokumente & Befunde jederzeit abrufen</li>
+        <li>🧾 Rechnungen einsehen & herunterladen</li>
+        <li>👤 Persönliche Daten verwalten</li>
+        <li>🔒 Sicher & datenschutzkonform</li>
+    </ul>
+</div>
+
+@code {
+    [SupplyParameterFromForm(FormName = "login")]
+    private LoginInput Input { get; set; } = new();
+
+    [SupplyParameterFromQuery(Name = "passwort-geaendert")]
+    private string? PasswortGeaendertQuery { get; set; }
+
+    private bool passwortGeaendert => PasswortGeaendertQuery == "1";
+    private string? fehler;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext == null) return;
+
+        if (httpContext.User.Identity?.IsAuthenticated == true)
+        {
+            var rolle = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            Navigation.NavigateTo(rolle == "admin" ? "/admin" : "/dashboard");
+            return;
+        }
+
+        if (httpContext.Request.Method == "POST")
+        {
+            await HandleLogin(httpContext);
+        }
+    }
+
+    private async Task HandleLogin(Microsoft.AspNetCore.Http.HttpContext httpContext)
+    {
+        if (string.IsNullOrWhiteSpace(Input.Email) || string.IsNullOrWhiteSpace(Input.Passwort))
+        {
+            fehler = "Bitte E-Mail und Passwort eingeben.";
+            return;
+        }
+
+        var benutzer = Db.Benutzer.FirstOrDefault(b =>
+            b.Email.ToLower() == Input.Email.ToLower().Trim());
+
+        if (benutzer == null || !BCrypt.Net.BCrypt.Verify(Input.Passwort, benutzer.PasswortHash))
+        {
+            fehler = "E-Mail oder Passwort falsch.";
+            return;
+        }
+
+        if (benutzer.Status == "gesperrt")
+        {
+            fehler = "Ihr Konto wurde gesperrt. Bitte kontaktieren Sie die Praxis.";
+            return;
+        }
+
+        benutzer.LetzterLogin = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new(System.Security.Claims.ClaimTypes.NameIdentifier, benutzer.Id),
+            new(System.Security.Claims.ClaimTypes.Name, benutzer.Email),
+            new(System.Security.Claims.ClaimTypes.Role, benutzer.Rolle),
+            new("vorname", benutzer.Vorname),
+            new("nachname", benutzer.Nachname)
+        };
+
+        var identity = new System.Security.Claims.ClaimsIdentity(
+            claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        await httpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(1800)
+            });
+
+        var redirectUrl = "/dashboard";
+        Navigation.NavigateTo(redirectUrl, forceLoad: true);
+    }
+
+    private class LoginInput
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Passwort { get; set; } = string.Empty;
+    }
+}

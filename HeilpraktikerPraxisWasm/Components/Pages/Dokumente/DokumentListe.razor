@@ -1,0 +1,221 @@
+@page "/dokumente"
+@page "/dokumente/neu"
+@inject DokumentService DokumentSvc
+@inject PatientenService PatientenSvc
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Dokumente</PageTitle>
+
+@if (_showUpload)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => _showUpload = false)" />
+        <MudText Typo="Typo.h5">Dokument hochladen</MudText>
+    </MudStack>
+
+    <MudCard Elevation="2" Style="max-width:600px">
+        <MudCardContent>
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudAutocomplete T="Patient" @bind-Value="_formPatient" Label="Patient (optional)"
+                                     SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                                     Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_dokument.Name" Label="Dokumentname" Required="true"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="DokumentKategorie" @bind-Value="_dokument.Kategorie"
+                               Label="Kategorie" Variant="Variant.Outlined">
+                        @foreach (DokumentKategorie k in Enum.GetValues<DokumentKategorie>())
+                        {
+                            <MudSelectItem Value="@k">@k</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_dokument.Beschreibung" Label="Beschreibung"
+                                  Lines="2" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <InputFile id="fileInput" OnChange="DateiGewaehlt" style="display:none" accept="*/*" />
+                    <label for="fileInput" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:8px 16px;border:1px solid #15803d;border-radius:4px;color:#15803d;font-size:14px;font-weight:500;background:white;">
+                        Datei auswählen
+                    </label>
+                    @if (_dateiName != null)
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-2">
+                            <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" />
+                            @_dateiName
+                        </MudText>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions Class="pa-4">
+            <MudStack Row="true" Justify="Justify.FlexEnd" FullWidth="true">
+                <MudButton Variant="Variant.Outlined" OnClick="@(() => _showUpload = false)">Abbrechen</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                           OnClick="Speichern" Disabled="@(string.IsNullOrEmpty(_dateiBase64) || string.IsNullOrEmpty(_dokument.Name))">
+                    Speichern
+                </MudButton>
+            </MudStack>
+        </MudCardActions>
+    </MudCard>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudText Typo="Typo.h5">Dokumentenverwaltung</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Upload"
+                   OnClick="@(() => { _showUpload = true; _dokument = new(); _dateiName = null; _dateiBase64 = null; })">
+            Hochladen
+        </MudButton>
+    </MudStack>
+
+    <!-- Filter -->
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardContent>
+            <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center">
+                <MudAutocomplete T="Patient" Value="_filterPatient" Label="Patient filtern"
+                                 SearchFunc="PatientenSuche" ToStringFunc="@(p => p?.VollerName ?? "")"
+                                 Variant="Variant.Outlined" Style="max-width:250px"
+                                 ValueChanged="@OnPatientFilterChanged" Clearable="true" />
+                <MudChipSet T="string" @bind-SelectedValue="_filterKategorie" SelectionMode="SelectionMode.SingleSelection">
+                    <MudChip T="string" Value="@("")">Alle</MudChip>
+                    @foreach (DokumentKategorie k in Enum.GetValues<DokumentKategorie>())
+                    {
+                        <MudChip T="string" Value="@k.ToString()">@k</MudChip>
+                    }
+                </MudChipSet>
+            </MudStack>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Dokumente-Grid -->
+    <MudGrid Spacing="3">
+        @foreach (var d in GefilterteDokumente)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudStack AlignItems="AlignItems.Center" Class="pa-2">
+                            <MudIcon Icon="@GetDokumentIcon(d.Typ)" Size="Size.Large" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle2" Align="Align.Center">@d.Name</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@d.Kategorie</MudChip>
+                            @if (d.Patient is not null)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@d.Patient.VollerName</MudText>
+                            }
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @d.Erstellt.ToString("dd.MM.yyyy") · @d.GroesseFormatiert
+                            </MudText>
+                        </MudStack>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small"
+                                       Color="Color.Primary" OnClick="@(() => HerunterlaodenAsync(d.Id))" />
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       Color="Color.Error" OnClick="@(() => LoeschenAsync(d.Id))" />
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+        @if (!GefilterteDokumente.Any())
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info">Keine Dokumente gefunden.</MudAlert>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<Dokument> _dokumente = [];
+    private bool _showUpload;
+    private List<Patient> _allePatienten = [];
+    private Patient? _filterPatient;
+    private Patient? _formPatient;
+    private string _filterKategorie = "";
+    private Dokument _dokument = new();
+    private string? _dateiName;
+    private string? _dateiBase64;
+
+    [SupplyParameterFromQuery] public int? PatientId { get; set; }
+
+    private IEnumerable<Dokument> GefilterteDokumente => _dokumente
+        .Where(d => _filterPatient is null || d.PatientId == _filterPatient.Id)
+        .Where(d => string.IsNullOrEmpty(_filterKategorie) || d.Kategorie.ToString() == _filterKategorie);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allePatienten = await PatientenSvc.AllePatientenAsync();
+        if (PatientId.HasValue)
+        {
+            _formPatient = _allePatienten.FirstOrDefault(p => p.Id == PatientId.Value);
+            _showUpload = true;
+        }
+        await Laden();
+    }
+
+    private async Task OnPatientFilterChanged(Patient? p) { _filterPatient = p; await Laden(); }
+    private async Task Laden() =>
+        _dokumente = await DokumentSvc.AlleDokumenteAsync(_filterPatient?.Id);
+
+    private async Task<IEnumerable<Patient>> PatientenSuche(string? val, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(val)) return _allePatienten;
+        return _allePatienten.Where(p => p.VollerName.Contains(val, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task DateiGewaehlt(InputFileChangeEventArgs e)
+    {
+        var datei = e.File;
+        _dateiName = datei.Name;
+        _dokument.Typ = datei.ContentType;
+        _dokument.Groesse = datei.Size;
+        if (string.IsNullOrEmpty(_dokument.Name)) _dokument.Name = Path.GetFileNameWithoutExtension(datei.Name);
+        using var ms = new MemoryStream();
+        await datei.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024).CopyToAsync(ms);
+        _dateiBase64 = Convert.ToBase64String(ms.ToArray());
+    }
+
+    private async Task Speichern()
+    {
+        if (string.IsNullOrEmpty(_dateiBase64)) return;
+        _dokument.DatenBase64 = _dateiBase64;
+        _dokument.PatientId = _formPatient?.Id;
+        await DokumentSvc.SpeichernAsync(_dokument);
+        Snackbar.Add("Dokument gespeichert!", Severity.Success);
+        _showUpload = false;
+        await Laden();
+    }
+
+    private async Task HerunterlaodenAsync(int id)
+    {
+        var d = await DokumentSvc.GetDokumentAsync(id);
+        if (d is null || string.IsNullOrEmpty(d.DatenBase64)) return;
+        await JS.InvokeVoidAsync("praxisPdf.downloadBase64File", d.Name, d.Typ, d.DatenBase64);
+    }
+
+    private async Task LoeschenAsync(int id)
+    {
+        await DokumentSvc.LoeschenAsync(id);
+        Snackbar.Add("Dokument gelöscht.", Severity.Info);
+        await Laden();
+    }
+
+    private static string GetDokumentIcon(string typ) => typ switch
+    {
+        var t when t.Contains("pdf") => Icons.Material.Filled.PictureAsPdf,
+        var t when t.Contains("image") => Icons.Material.Filled.Image,
+        var t when t.Contains("word") || t.Contains("document") => Icons.Material.Filled.Description,
+        var t when t.Contains("spreadsheet") || t.Contains("excel") => Icons.Material.Filled.TableChart,
+        _ => Icons.Material.Filled.InsertDriveFile
+    };
+}

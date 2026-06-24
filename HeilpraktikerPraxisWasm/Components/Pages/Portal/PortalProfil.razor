@@ -1,0 +1,169 @@
+@page "/portal/profil"
+@layout PortalLayout
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Patientenportal – Mein Profil</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />Mein Profil
+</MudText>
+
+<MudStack Spacing="4">
+    <!-- Profildaten -->
+    <MudCard Elevation="2" Style="border-radius:12px;">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.subtitle1">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-1" />Meine Daten
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (Supabase.Profil != null)
+            {
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Vorname</MudText>
+                        <MudText Typo="Typo.body1">@Supabase.Profil.Vorname</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Nachname</MudText>
+                        <MudText Typo="Typo.body1">@Supabase.Profil.Nachname</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">E-Mail</MudText>
+                        <MudText Typo="Typo.body1">@Supabase.CurrentUser?.Email</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(Supabase.Profil.Geburtsdatum))
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Geburtsdatum</MudText>
+                            <MudText Typo="Typo.body1">@FormatDate(Supabase.Profil.Geburtsdatum)</MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    E-Mail: @Supabase.CurrentUser?.Email
+                </MudText>
+            }
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Datenschutz (DSGVO) -->
+    <MudCard Elevation="2" Style="border-radius:12px;">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.subtitle1">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-1" Color="Color.Success" />
+                    Datenschutz (DSGVO)
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Ihre Daten werden ausschließlich zur Erbringung heilpraktischer Leistungen
+                    verarbeitet (Art. 9 Abs. 2 lit. h DSGVO). Rechtsgrundlage: Behandlungsvertrag.
+                </MudAlert>
+
+                <MudExpansionPanels>
+                    <MudExpansionPanel Text="Recht auf Auskunft (Art. 15 DSGVO)">
+                        <MudText Typo="Typo.body2">
+                            Sie haben das Recht, Auskunft über Ihre bei uns gespeicherten
+                            Daten zu erhalten. Stellen Sie hier eine Anfrage:
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                   Class="mt-2" OnClick='() => AnfrageStellen("auskunft")'>
+                            Auskunft anfordern
+                        </MudButton>
+                    </MudExpansionPanel>
+
+                    <MudExpansionPanel Text="Recht auf Löschung (Art. 17 DSGVO)">
+                        <MudText Typo="Typo.body2">
+                            Sie können die Löschung Ihrer Daten beantragen. Bitte beachten Sie,
+                            dass gesetzliche Aufbewahrungsfristen (10 Jahre für Abrechnungsdaten)
+                            einer sofortigen Löschung entgegenstehen können.
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                   Class="mt-2" OnClick="LoeschungBeantragen">
+                            Löschung beantragen
+                        </MudButton>
+                    </MudExpansionPanel>
+
+                    <MudExpansionPanel Text="Recht auf Datenübertragbarkeit (Art. 20 DSGVO)">
+                        <MudText Typo="Typo.body2">
+                            Sie können eine Kopie Ihrer Daten in maschinenlesbarem Format anfordern.
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                   Class="mt-2" OnClick='() => AnfrageStellen("export")'>
+                            Datenexport anfordern
+                        </MudButton>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            </MudStack>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Abmelden -->
+    <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+               StartIcon="@Icons.Material.Filled.Logout" OnClick="Abmelden">
+        Abmelden
+    </MudButton>
+</MudStack>
+
+<!-- Bestätigungsdialog Löschung -->
+<MudDialog @bind-Visible="_loeschDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Color="Color.Error">Datenlöschung beantragen</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudAlert Severity="Severity.Warning">
+            Ihr Antrag wird an die Praxis weitergeleitet. Sie werden innerhalb von
+            30 Tagen eine Rückmeldung erhalten.
+        </MudAlert>
+        <MudTextField @bind-Value="_loeschNachricht" Label="Begründung (optional)"
+                      Variant="Variant.Outlined" Multiline="true" Lines="3" Class="mt-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _loeschDialog = false)">Abbrechen</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled"
+                   OnClick="LoeschungBestaetigen">Antrag senden</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _loeschDialog;
+    private string _loeschNachricht = "";
+
+    private async Task AnfrageStellen(string typ)
+    {
+        var ok = await Supabase.SendeDatenschutzanfrageAsync(typ, $"{typ}-Anfrage des Patienten.");
+        Snackbar.Add(ok ? "Anfrage gesendet. Die Praxis wird sich melden." : "Fehler beim Senden.", ok ? Severity.Success : Severity.Error);
+    }
+
+    private void LoeschungBeantragen() => _loeschDialog = true;
+
+    private async Task LoeschungBestaetigen()
+    {
+        var ok = await Supabase.SendeDatenschutzanfrageAsync("loeschung", _loeschNachricht);
+        _loeschDialog = false;
+        Snackbar.Add(ok ? "Löschantrag gesendet." : "Fehler beim Senden.", ok ? Severity.Success : Severity.Error);
+    }
+
+    private async Task Abmelden()
+    {
+        await Supabase.LogoutAsync();
+        Nav.NavigateTo("/portal/login");
+    }
+
+    private static string FormatDate(string s)
+    {
+        if (DateOnly.TryParse(s, out var d)) return d.ToString("dd.MM.yyyy");
+        return s;
+    }
+}

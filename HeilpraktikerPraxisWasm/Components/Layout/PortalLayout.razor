@@ -1,0 +1,107 @@
+@inherits LayoutComponentBase
+@inject SupabaseService Supabase
+@inject NavigationManager Nav
+@implements IDisposable
+
+<MudThemeProvider Theme="_portalTheme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (!_geladen)
+{
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </div>
+}
+else
+{
+    <MudLayout>
+        <!-- Header -->
+        <MudAppBar Elevation="2" Color="Color.Primary" Fixed="true">
+            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="mr-2" />
+            <MudText Typo="Typo.h6">Patientenportal</MudText>
+            <MudSpacer />
+            @if (Supabase.IsLoggedIn)
+            {
+                <MudText Typo="Typo.body2" Class="mr-3 d-none d-sm-flex">
+                    @(Supabase.Profil?.VollerName ?? Supabase.CurrentUser?.Email)
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
+                               OnClick="Abmelden" Title="Abmelden" />
+            }
+        </MudAppBar>
+
+        @if (Supabase.IsLoggedIn)
+        {
+            <!-- Bottom Navigation (Mobile) -->
+            <MudPaper Elevation="8" Style="position:fixed;bottom:0;left:0;right:0;z-index:1200;border-radius:0;">
+                <MudStack Row="true" Justify="Justify.SpaceAround" Style="padding:4px 0;">
+                    <MudStack AlignItems="AlignItems.Center" Style="gap:0;cursor:pointer;flex:1;padding:6px;"
+                              @onclick='() => Nav.NavigateTo("/portal")'>
+                        <MudIcon Icon="@Icons.Material.Filled.Dashboard" Color="@NavColor("/portal", exact: true)" Size="Size.Medium" />
+                        <MudText Typo="Typo.caption" Color="@NavColor("/portal", exact: true)">Übersicht</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Style="gap:0;cursor:pointer;flex:1;padding:6px;"
+                              @onclick='() => Nav.NavigateTo("/portal/rechnungen")'>
+                        <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="@NavColor("/portal/rechnungen")" Size="Size.Medium" />
+                        <MudText Typo="Typo.caption" Color="@NavColor("/portal/rechnungen")">Rechnungen</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Style="gap:0;cursor:pointer;flex:1;padding:6px;"
+                              @onclick='() => Nav.NavigateTo("/portal/dokumente")'>
+                        <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="@NavColor("/portal/dokumente")" Size="Size.Medium" />
+                        <MudText Typo="Typo.caption" Color="@NavColor("/portal/dokumente")">Dokumente</MudText>
+                    </MudStack>
+                    <MudStack AlignItems="AlignItems.Center" Style="gap:0;cursor:pointer;flex:1;padding:6px;"
+                              @onclick='() => Nav.NavigateTo("/portal/profil")'>
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Color="@NavColor("/portal/profil")" Size="Size.Medium" />
+                        <MudText Typo="Typo.caption" Color="@NavColor("/portal/profil")">Profil</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+
+        <MudMainContent Style="padding-top:64px;padding-bottom:80px;">
+            <MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code {
+    private bool _geladen;
+
+    private readonly MudTheme _portalTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = new MudBlazor.Utilities.MudColor("#0ea5e9"),
+            Secondary = new MudBlazor.Utilities.MudColor("#0284c7"),
+            AppbarBackground = new MudBlazor.Utilities.MudColor("#0ea5e9"),
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentPath = new Uri(Nav.Uri).AbsolutePath;
+        if (!Supabase.IsLoggedIn && currentPath != "/portal/login")
+            Nav.NavigateTo("/portal/login");
+        _geladen = true;
+    }
+
+    private Color NavColor(string path, bool exact = false)
+    {
+        var current = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+        var match = exact ? current == path : current.StartsWith(path);
+        return match ? Color.Primary : Color.Default;
+    }
+
+    private async Task Abmelden()
+    {
+        await Supabase.LogoutAsync();
+        Nav.NavigateTo("/portal/login");
+    }
+
+    public void Dispose() { }
+}

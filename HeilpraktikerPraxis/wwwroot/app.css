@@ -1,0 +1,40 @@
+/* Heilpraktiker Praxis – Custom Styles */
+
+* { box-sizing: border-box; }
+
+html, body {
+    font-family: 'Roboto', system-ui, sans-serif;
+    background-color: #f8faf9;
+    margin: 0;
+    padding: 0;
+}
+
+.cursor-pointer { cursor: pointer !important; }
+
+/* Blazor error */
+#blazor-error-ui {
+    background: #fef2f2;
+    border-top: 2px solid #ef4444;
+    padding: 0.6rem 1.25rem;
+    position: fixed;
+    bottom: 0; right: 0; left: 0;
+    display: none;
+    z-index: 9999;
+    font-size: 0.9rem;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+.blazor-error-boundary::after { content: "Ein Fehler ist aufgetreten."; }
+
+/* MudBlazor table hover */
+.mud-table-row:hover td { background-color: #f0fdf4 !important; }
+
+/* Print styles */
+@media print {
+    .mud-drawer, .mud-appbar { display: none !important; }
+    .mud-main-content { margin: 0 !important; padding: 0 !important; }
+}

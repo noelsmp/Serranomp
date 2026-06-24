@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: system-ui, 'Segoe UI', sans-serif;
+    margin: 0;
+  }
+  * { box-sizing: border-box; }
+  #root { width: 100%; min-height: 100vh; }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer;
+  }
+  .sidebar-link.active { @apply bg-green-800 text-white; }
+  .sidebar-link:not(.active) { @apply text-green-100 hover:bg-green-700/60; }
+  .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5; }
+  .btn { @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply btn bg-green-700 text-white hover:bg-green-800; }
+  .btn-secondary { @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50; }
+  .btn-danger { @apply btn bg-red-50 text-red-600 border border-red-200 hover:bg-red-100; }
+  .input { @apply w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600; }
+  .label { @apply block text-xs font-medium text-gray-500 mb-1; }
+  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
+  .page-title { @apply text-2xl font-bold text-gray-900 mb-1; }
+  .page-subtitle { @apply text-sm text-gray-500 mb-6; }
+  .table-row { @apply border-b border-gray-100 hover:bg-gray-50 transition-colors; }
+  .table-th { @apply px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider; }
+  .table-td { @apply px-4 py-3 text-sm text-gray-700; }
+}
+
+/* FullCalendar overrides */
+.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; }
+.fc .fc-button-primary { background-color: #15803d !important; border-color: #15803d !important; }
+.fc .fc-button-primary:hover { background-color: #166534 !important; }
+.fc .fc-event { border-radius: 6px; font-size: 0.78rem; }
+.fc-day-today { background-color: #f0fdf4 !important; }
