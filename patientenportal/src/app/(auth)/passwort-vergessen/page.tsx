@@ -2,22 +2,27 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 export default function PasswortVergessenPage() {
   const [email, setEmail] = useState('')
-  const [gesendet, setGesendet] = useState(false)
   const [laden, setLaden] = useState(false)
+  const [gesendet, setGesendet] = useState(false)
 
   async function absenden(e: React.FormEvent) {
     e.preventDefault()
     setLaden(true)
-    await fetch('/api/passwort-vergessen', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    setLaden(false)
-    setGesendet(true)
+    try {
+      await fetch('/api/passwort-vergessen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      setGesendet(true)
+    } finally {
+      setLaden(false)
+    }
   }
 
   return (
@@ -31,42 +36,33 @@ export default function PasswortVergessenPage() {
         <div className="px-6 py-6">
           {gesendet ? (
             <div className="space-y-4">
-              <div className="bg-sage-lt border border-sage rounded px-4 py-4 font-sans text-sm text-sage-dk">
-                <p className="font-semibold mb-1">E-Mail versendet</p>
-                <p>Falls diese E-Mail-Adresse bei uns registriert ist, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Bitte prüfen Sie auch Ihren Spam-Ordner.</p>
+              <div className="bg-green-50 border border-green-200 text-green-800 rounded px-4 py-3 text-sm font-sans">
+                Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen des Passworts gesendet. Bitte prüfen Sie auch Ihren Spam-Ordner.
               </div>
-              <p className="text-center font-sans text-sm text-muted">
-                <Link href="/login" className="text-sage hover:text-sage-dk">Zurück zur Anmeldung</Link>
-              </p>
+              <p className="font-sans text-sm text-muted text-center">Der Link ist 1 Stunde gültig.</p>
             </div>
           ) : (
             <form onSubmit={absenden} className="space-y-4">
-              <div>
-                <label className="block font-sans text-xs text-muted uppercase tracking-wide mb-1">
-                  Ihre E-Mail-Adresse
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="ihre@email.de"
-                  className="w-full border border-border rounded px-3 py-2 font-sans text-sm text-text focus:outline-none focus:border-sage"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={laden}
-                className="w-full bg-sage text-white font-sans text-sm py-2.5 rounded hover:bg-sage-dk transition-colors disabled:opacity-50"
-              >
-                {laden ? 'Wird gesendet…' : 'Link senden'}
-              </button>
-              <p className="text-center font-sans text-sm text-muted">
-                <Link href="/login" className="text-sage hover:text-sage-dk">Zurück zur Anmeldung</Link>
-              </p>
+              <Input
+                label="E-Mail-Adresse"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="ihre@email.de"
+              />
+              <Button type="submit" className="w-full" loading={laden} size="lg">
+                Link anfordern
+              </Button>
             </form>
           )}
+        </div>
+
+        <div className="px-6 py-4 bg-warm border-t border-border text-center">
+          <Link href="/login" className="font-sans text-sm text-sage hover:text-sage-dk">
+            Zurück zur Anmeldung
+          </Link>
         </div>
       </div>
     </div>

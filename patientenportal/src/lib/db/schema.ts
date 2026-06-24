@@ -1,8 +1,8 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm'
 
-// ─── Benutzer (Patienten + Admin) ─────────────────────────────────────────────────────
-ex port const benutzer = sqliteTable('benutzer', {
+// ─── Benutzer (Patienten + Admin) ─────────────────────────────────────────────
+export const benutzer = sqliteTable('benutzer', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   passwortHash: text('passwort_hash').notNull(),
@@ -17,8 +17,8 @@ ex port const benutzer = sqliteTable('benutzer', {
   letzterLogin: text('letzter_login'),
 })
 
-// ─── Registrierungsanfragen (vor Admin-Freischaltung) ─────────────────────────────
-ex port const registrierungen = sqliteTable('registrierungen', {
+// ─── Registrierungsanfragen (vor Admin-Freischaltung) ─────────────────────────
+export const registrierungen = sqliteTable('registrierungen', {
   id: text('id').primaryKey(),
   vorname: text('vorname').notNull(),
   nachname: text('nachname').notNull(),
@@ -31,18 +31,18 @@ ex port const registrierungen = sqliteTable('registrierungen', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
   bearbeitetAm: text('bearbeitet_am'),
   bearbeitetVon: text('bearbeitet_von'),
-  token: text('token').notNull(),
+  token: text('token').notNull(),  // für E-Mail-Links
 })
 
-// ─── Dokumente ─────────────────────────────────────────────────────────────────────────
-ex port const dokumente = sqliteTable('dokumente', {
+// ─── Dokumente ────────────────────────────────────────────────────────────────
+export const dokumente = sqliteTable('dokumente', {
   id: text('id').primaryKey(),
   patientId: text('patient_id').notNull().references(() => benutzer.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   kategorie: text('kategorie', {
     enum: ['rechnung', 'anamnesebogen', 'behandlung', 'vorlage', 'sonstiges'],
   }).notNull(),
-  dateipfad: text('dateipfad').notNull(),
+  dateipfad: text('dateipfad').notNull(),   // relativer Pfad im uploads-Verzeichnis
   dateigroesse: integer('dateigroesse').notNull().default(0),
   mimeType: text('mime_type').notNull().default('application/octet-stream'),
   hochgeladenVon: text('hochgeladen_von', { enum: ['praxis', 'patient'] }).notNull(),
@@ -50,8 +50,8 @@ ex port const dokumente = sqliteTable('dokumente', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-// ─── Rechnungen ───────────────────────────────────────────────────────────────────────────
-ex port const rechnungen = sqliteTable('rechnungen', {
+// ─── Rechnungen ───────────────────────────────────────────────────────────────
+export const rechnungen = sqliteTable('rechnungen', {
   id: text('id').primaryKey(),
   patientId: text('patient_id').notNull().references(() => benutzer.id, { onDelete: 'cascade' }),
   rechnungsnr: text('rechnungsnr').notNull(),
@@ -64,18 +64,18 @@ ex port const rechnungen = sqliteTable('rechnungen', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-// ─── Audit-Log ────────────────────────────────────────────────────────────────────────────
-ex port const auditLog = sqliteTable('audit_log', {
+// ─── Audit-Log ────────────────────────────────────────────────────────────────
+export const auditLog = sqliteTable('audit_log', {
   id: text('id').primaryKey(),
   userId: text('user_id'),
   aktion: text('aktion').notNull(),
-  details: text('details'),
+  details: text('details'),   // JSON als Text
   ipAdresse: text('ip_adresse'),
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-// ─── DSGVO-Anfragen ──────────────────────────────────────────────────────────────────────
-ex port const dsgvoAnfragen = sqliteTable('dsgvo_anfragen', {
+// ─── DSGVO-Anfragen ───────────────────────────────────────────────────────────
+export const dsgvoAnfragen = sqliteTable('dsgvo_anfragen', {
   id: text('id').primaryKey(),
   patientId: text('patient_id').notNull().references(() => benutzer.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
@@ -85,8 +85,8 @@ ex port const dsgvoAnfragen = sqliteTable('dsgvo_anfragen', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-// ─── Sessions ────────────────────────────────────────────────────────────────────────────────
-ex port const sessions = sqliteTable('sessions', {
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => benutzer.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(),
@@ -94,8 +94,8 @@ ex port const sessions = sqliteTable('sessions', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-// ─── Passwort-Reset-Tokens ───────────────────────────────────────────────────────────────
-ex port const passwortResetTokens = sqliteTable('passwort_reset_tokens', {
+// ─── Passwort-Reset-Tokens ────────────────────────────────────────────────────
+export const passwortResetTokens = sqliteTable('passwort_reset_tokens', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => benutzer.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(),
@@ -103,9 +103,9 @@ ex port const passwortResetTokens = sqliteTable('passwort_reset_tokens', {
   erstellt: text('erstellt').notNull().default(sql`(datetime('now'))`),
 })
 
-ex port type Benutzer = typeof benutzer.$inferSelect
-ex port type NeuerBenutzer = typeof benutzer.$inferInsert
-ex port type Registrierung = typeof registrierungen.$inferSelect
-ex port type Dokument = typeof dokumente.$inferSelect
-ex port type Rechnung = typeof rechnungen.$inferSelect
-ex port type AuditLogEintrag = typeof auditLog.$inferSelect
+export type Benutzer = typeof benutzer.$inferSelect
+export type NeuerBenutzer = typeof benutzer.$inferInsert
+export type Registrierung = typeof registrierungen.$inferSelect
+export type Dokument = typeof dokumente.$inferSelect
+export type Rechnung = typeof rechnungen.$inferSelect
+export type AuditLogEintrag = typeof auditLog.$inferSelect

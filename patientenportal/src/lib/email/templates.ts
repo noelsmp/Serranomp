@@ -75,14 +75,14 @@ function layout(title: string, content: string): string {
         NATURHEILPRAXIS HILFREICH
       </h1>
       <p style="color: #eaf2eb; margin: 4px 0 0; font-size: 13px; font-family: Arial, sans-serif;">
-        Sympathikustherapie &amp; Regulationsmedizin &middot; Moers
+        Sympathikustherapie &amp; Regulationsmedizin · Moers
       </p>
     </div>
     <div style="${CONTENT_STYLE}">
       ${content}
     </div>
     <div style="${FOOTER_STYLE}">
-      <p style="margin: 0 0 4px;">Naturheilpraxis Hilfreich &middot; Moers &middot; <a href="https://naturheilpraxis-hilfreich.de" style="color: #6b8f71;">naturheilpraxis-hilfreich.de</a></p>
+      <p style="margin: 0 0 4px;">Naturheilpraxis Hilfreich · Moers · <a href="https://naturheilpraxis-hilfreich.de" style="color: #6b8f71;">naturheilpraxis-hilfreich.de</a></p>
       <p style="margin: 0; font-size: 11px;">Diese E-Mail wurde automatisch versandt. Bei Fragen wenden Sie sich direkt an die Praxis.</p>
     </div>
   </div>
@@ -143,10 +143,10 @@ export function emailFreischaltungBestaetigung(params: {
     <p>Ihr Zugang zum Patientenportal der Naturheilpraxis Hilfreich wurde freigeschaltet.</p>
     <p>Ihre Zugangsdaten:</p>
     <div style="background: #eaf2eb; border: 1px solid #c8d8ca; border-radius: 6px; padding: 16px 20px; margin: 20px 0; font-family: Arial, sans-serif;">
-      <p style="margin: 0 0 8px; font-size: 14px;"><strong>Passwort (temporär):</strong> <code style="background:#fff;padding:2px 8px;border-radius:3px;border:1px solid #c8d8ca;font-size:15px;letter-spacing:0.05em;">${params.tempPasswort}</code></p>
-      <p style="margin: 0; font-size: 12px; color: #4e6b53;">Bitte ändern Sie dieses Passwort nach dem ersten Login unter &bdquo;Mein Profil&ldquo;.</p>
+      <p style="margin: 0 0 8px; font-size: 14px;"><strong>Passwort (temporär):</strong> <code style="background: #fff; padding: 2px 8px; border-radius: 3px; font-size: 15px; letter-spacing: 0.05em;">${params.tempPasswort}</code></p>
+      <p style="margin: 0; font-size: 12px; color: #4e6b53;">Bitte ändern Sie Ihr Passwort nach der ersten Anmeldung unter „Mein Profil".</p>
     </div>
-    <p>Mit diesem Zugang können Sie:</p>
+    <p>Ab sofort können Sie:</p>
     <ul style="color: #2d2d2d; line-height: 2;">
       <li>Ihre Rechnungen einsehen und herunterladen</li>
       <li>Behandlungsdokumente abrufen</li>
@@ -211,6 +211,26 @@ export function emailDokumentBereitgestellt(params: {
   return { subject, html }
 }
 
+export function emailPasswortReset(params: {
+  vorname: string
+  resetLink: string
+}): { subject: string; html: string } {
+  const subject = 'Passwort zurücksetzen – Naturheilpraxis Hilfreich'
+  const html = layout(subject, `
+    <h2 style="color: #4e6b53; font-size: 18px; margin: 0 0 16px;">Passwort zurücksetzen</h2>
+    <p>Hallo ${params.vorname},</p>
+    <p>Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den folgenden Button, um ein neues Passwort zu vergeben:</p>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${params.resetLink}" style="${BUTTON_STYLE}">Neues Passwort vergeben</a>
+    </div>
+    <p style="font-size: 13px; color: #6b6b6b;">Dieser Link ist <strong>1 Stunde</strong> gültig. Falls Sie keine Passwort-Zurücksetzung angefordert haben, können Sie diese E-Mail ignorieren.</p>
+    <p style="font-size: 13px; color: #6b6b6b;">Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:<br>
+      <span style="color: #6b8f71; word-break: break-all;">${params.resetLink}</span>
+    </p>
+  `)
+  return { subject, html }
+}
+
 export function emailDokumentHochgeladen(params: {
   patientVorname: string
   patientNachname: string
@@ -229,24 +249,6 @@ export function emailDokumentHochgeladen(params: {
     <div style="text-align: center; margin: 24px 0;">
       <a href="${params.adminLink}" style="${BUTTON_STYLE}">Im Admin-Dashboard ansehen</a>
     </div>
-  `)
-  return { subject, html }
-}
-
-export function emailPasswortReset(params: {
-  vorname: string
-  resetLink: string
-}): { subject: string; html: string } {
-  const subject = 'Passwort zurücksetzen – Naturheilpraxis Hilfreich'
-  const html = layout(subject, `
-    <h2 style="color: #4e6b53; font-size: 18px; margin: 0 0 16px;">Passwort zurücksetzen</h2>
-    <p>Guten Tag ${params.vorname},</p>
-    <p>wir haben eine Anfrage erhalten, das Passwort für Ihr Patientenportal-Konto zurückzusetzen.</p>
-    <p>Klicken Sie auf den folgenden Button, um ein neues Passwort zu vergeben. Der Link ist <strong>1 Stunde</strong> gültig.</p>
-    <div style="text-align: center; margin: 24px 0;">
-      <a href="${params.resetLink}" style="${BUTTON_STYLE}">Neues Passwort vergeben</a>
-    </div>
-    <p style="font-size: 13px; color: #6b6b6b;">Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren. Ihr Passwort bleibt unverändert.</p>
   `)
   return { subject, html }
 }
