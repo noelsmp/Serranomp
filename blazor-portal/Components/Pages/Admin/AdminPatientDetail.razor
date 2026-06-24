@@ -88,8 +88,6 @@ else
                     <dd>@(patient.LetzterLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Noch nie")</dd>
                     <dt>Dokumente</dt>
                     <dd>@dokumente.Count</dd>
-                    <dt>Rechnungen</dt>
-                    <dd>@rechnungen.Count</dd>
                 </dl>
             </div>
         </div>
@@ -156,52 +154,6 @@ else
         </div>
     </div>
 
-    <!-- Invoices -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h2>Rechnungen (@rechnungen.Count)</h2>
-        </div>
-        <div class="card-body">
-            @if (rechnungen.Count > 0)
-            {
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nr.</th>
-                                <th>Ausgestellt</th>
-                                <th>Fällig</th>
-                                <th>Betrag</th>
-                                <th>Bezahlt</th>
-                                <th>Aktionen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var r in rechnungen)
-                            {
-                                <tr>
-                                    <td>@r.Rechnungsnr</td>
-                                    <td>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</td>
-                                    <td>@r.Faelligkeitsdatum.ToString("dd.MM.yyyy")</td>
-                                    <td>@r.Gesamtbetrag.ToString("N2") €</td>
-                                    <td>
-                                        <input type="checkbox" checked="@r.Bezahlt"
-                                               @onchange="(e) => RechnungBezahltToggle(r, (bool)(e.Value ?? false))" />
-                                    </td>
-                                    <td>
-                                        @if (r.DokumentId != null)
-                                        {
-                                            <a href="/api/download/@r.DokumentId" class="btn btn-sm btn-outline" target="_blank">DL</a>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
 }
 
 @code {
@@ -213,7 +165,6 @@ else
     private string? adminId;
     private Data.Models.Benutzer? patient;
     private List<Dokument> dokumente = new();
-    private List<Rechnung> rechnungen = new();
 
     // Edit patient fields
     private string editVorname = string.Empty;
@@ -255,9 +206,6 @@ else
         dokumente = await System.Threading.Tasks.Task.Run(() =>
             Db.Dokumente.Where(d => d.PatientId == Id)
                 .OrderByDescending(d => d.Erstellt).ToList());
-        rechnungen = await System.Threading.Tasks.Task.Run(() =>
-            Db.Rechnungen.Where(r => r.PatientId == Id)
-                .OrderByDescending(r => r.Ausstellungsdatum).ToList());
     }
 
     private async Task PatientSpeichern()
@@ -340,14 +288,6 @@ else
         await Db.SaveChangesAsync();
         await LadeDaten();
         erfolgMsg = "Dokument gelöscht.";
-    }
-
-    private async Task RechnungBezahltToggle(Rechnung r, bool bezahlt)
-    {
-        r.Bezahlt = bezahlt;
-        r.BezahltAm = bezahlt ? DateTime.UtcNow : null;
-        await Db.SaveChangesAsync();
-        erfolgMsg = bezahlt ? "Rechnung als bezahlt markiert." : "Rechnung als offen markiert.";
     }
 
     private static string KategorieName(string k) => k switch
