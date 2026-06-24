@@ -162,35 +162,6 @@ else
             <h2>Rechnungen (@rechnungen.Count)</h2>
         </div>
         <div class="card-body">
-            <div class="mb-3">
-                <h3>Neue Rechnung erstellen</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Rechnungs-Nr.</label>
-                        <input type="text" class="form-control" @bind="neueRechnungNr" />
-                    </div>
-                    <div class="form-group">
-                        <label>Betrag (€)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" @bind="neueBetrag" />
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ausstellungsdatum</label>
-                        <input type="date" class="form-control" @bind="neueAusstellungsdatum" />
-                    </div>
-                    <div class="form-group">
-                        <label>Fälligkeitsdatum</label>
-                        <input type="date" class="form-control" @bind="neueFaelligkeitsdatum" />
-                    </div>
-                </div>
-                <div class="form-check mb-2">
-                    <input type="checkbox" id="bezahlt" class="form-check-input" @bind="neueBezahlt" />
-                    <label for="bezahlt">Bereits bezahlt</label>
-                </div>
-                <button class="btn btn-primary" @onclick="RechnungErstellen">Rechnung erstellen</button>
-            </div>
-
             @if (rechnungen.Count > 0)
             {
                 <div class="table-responsive">
@@ -256,13 +227,6 @@ else
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? uploadFile;
     private string uploadKategorie = "sonstiges";
     private bool uploading;
-
-    // New invoice
-    private string neueRechnungNr = string.Empty;
-    private decimal neueBetrag;
-    private DateTime neueAusstellungsdatum = DateTime.Today;
-    private DateTime neueFaelligkeitsdatum = DateTime.Today.AddDays(30);
-    private bool neueBezahlt;
 
     private string? erfolgMsg;
     private string? fehlerMsg;
@@ -376,39 +340,6 @@ else
         await Db.SaveChangesAsync();
         await LadeDaten();
         erfolgMsg = "Dokument gelöscht.";
-    }
-
-    private async Task RechnungErstellen()
-    {
-        if (patient == null) return;
-        fehlerMsg = null;
-
-        if (string.IsNullOrWhiteSpace(neueRechnungNr))
-            neueRechnungNr = $"RE-{DateTime.UtcNow:yyyyMMdd}-{NewId()[..6].ToUpper()}";
-
-        var rechnung = new Rechnung
-        {
-            Id = NewId(),
-            PatientId = Id,
-            Rechnungsnr = neueRechnungNr,
-            Ausstellungsdatum = neueAusstellungsdatum,
-            Faelligkeitsdatum = neueFaelligkeitsdatum,
-            Gesamtbetrag = neueBetrag,
-            Bezahlt = neueBezahlt,
-            BezahltAm = neueBezahlt ? DateTime.UtcNow : null,
-            Erstellt = DateTime.UtcNow
-        };
-        Db.Rechnungen.Add(rechnung);
-        await Db.SaveChangesAsync();
-
-        neueRechnungNr = string.Empty;
-        neueBetrag = 0;
-        neueAusstellungsdatum = DateTime.Today;
-        neueFaelligkeitsdatum = DateTime.Today.AddDays(30);
-        neueBezahlt = false;
-
-        await LadeDaten();
-        erfolgMsg = "Rechnung erstellt.";
     }
 
     private async Task RechnungBezahltToggle(Rechnung r, bool bezahlt)
