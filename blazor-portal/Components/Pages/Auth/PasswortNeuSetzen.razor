@@ -18,15 +18,6 @@
         <a href="/passwort-vergessen">Neuen Link anfordern</a>
     </div>
 }
-else if (erfolgreich)
-{
-    <div class="alert alert-success">
-        Ihr Passwort wurde erfolgreich geändert. Sie können sich jetzt anmelden.
-    </div>
-    <div class="auth-links">
-        <a href="/login">Zur Anmeldung</a>
-    </div>
-}
 else
 {
     @if (!string.IsNullOrEmpty(fehler))
@@ -60,7 +51,6 @@ else
     private string? TokenQuery { get; set; }
 
     private bool tokenUngueltig;
-    private bool erfolgreich;
     private string? fehler;
 
     protected override async Task OnInitializedAsync()

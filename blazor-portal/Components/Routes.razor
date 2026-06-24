@@ -22,14 +22,3 @@
     </NotFound>
 </Router>
 
-@code {
-    private sealed class RedirectToLogin : ComponentBase
-    {
-        [Inject] private NavigationManager Navigation { get; set; } = default!;
-
-        protected override void OnInitialized()
-        {
-            Navigation.NavigateTo("/login", forceLoad: true);
-        }
-    }
-}

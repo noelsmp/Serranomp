@@ -18,7 +18,7 @@
     <div class="card-body">
         <div class="search-bar">
             <input type="text" class="form-control" placeholder="Suche nach Name, E-Mail oder Patienten-Nr..."
-                   @bind="suchbegriff" @bind:event="oninput" @oninput="FilterPatienten" />
+                   value="@suchbegriff" @oninput="e => { suchbegriff = e.Value?.ToString() ?? string.Empty; FilterPatienten(); }" />
         </div>
     </div>
 </div>
