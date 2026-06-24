@@ -1,0 +1,52 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="portal-layout">
+    <nav class="portal-nav">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <a href="/dashboard" class="brand-link">
+                    <span class="brand-name">Naturheilpraxis Hilfreich</span>
+                    <span class="brand-sub">Patientenportal</span>
+                </a>
+            </div>
+
+            <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+                &#9776;
+            </button>
+
+            <div class="nav-links">
+                <AuthorizeView Roles="admin">
+                    <Authorized>
+                        <NavLink href="/admin" Match="NavLinkMatch.All" class="nav-link">Admin-Dashboard</NavLink>
+                        <NavLink href="/admin/patienten" class="nav-link">Patienten</NavLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        <NavLink href="/dashboard" Match="NavLinkMatch.All" class="nav-link">Übersicht</NavLink>
+                        <NavLink href="/dokumente" class="nav-link">Dokumente</NavLink>
+                        <NavLink href="/rechnungen" class="nav-link">Rechnungen</NavLink>
+                        <NavLink href="/profil" class="nav-link">Mein Profil</NavLink>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            <div class="nav-user">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="user-name">
+                            @context.User.FindFirst("vorname")?.Value
+                            @context.User.FindFirst("nachname")?.Value
+                        </span>
+                        <a href="/auth/logout" class="btn btn-sm btn-outline">Abmelden</a>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </nav>
+
+    <main class="portal-main">
+        <div class="portal-content">
+            @Body
+        </div>
+    </main>
+</div>
