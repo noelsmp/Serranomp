@@ -58,25 +58,25 @@ public class EmailService
         }
     }
 
-    private string BaseTemplate(string title, string bodyContent) => $"""
+    private string BaseTemplate(string title, string bodyContent) => $$"""
         <!DOCTYPE html>
         <html lang="de">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>{title}</title>
+          <title>{{title}}</title>
           <style>
-            body {{ font-family: Arial, sans-serif; background: #f9f6f0; margin: 0; padding: 20px; color: #2d2d2d; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }}
-            .header {{ background: #4e6b53; padding: 32px 24px; text-align: center; }}
-            .header h1 {{ color: #fff; margin: 0; font-family: Georgia, serif; font-size: 22px; }}
-            .header p {{ color: #eaf2eb; margin: 8px 0 0; font-size: 14px; }}
-            .content {{ padding: 32px 24px; }}
-            .content p {{ line-height: 1.6; margin: 0 0 16px; }}
-            .btn {{ display: inline-block; background: #4e6b53; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 8px 4px; }}
-            .btn-danger {{ background: #9b4444; }}
-            .info-box {{ background: #eaf2eb; border-left: 4px solid #4e6b53; padding: 16px; border-radius: 4px; margin: 16px 0; }}
-            .footer {{ background: #f9f6f0; padding: 20px 24px; text-align: center; font-size: 12px; color: #6b6b6b; border-top: 1px solid #ddd5c8; }}
+            body { font-family: Arial, sans-serif; background: #f9f6f0; margin: 0; padding: 20px; color: #2d2d2d; }
+            .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+            .header { background: #4e6b53; padding: 32px 24px; text-align: center; }
+            .header h1 { color: #fff; margin: 0; font-family: Georgia, serif; font-size: 22px; }
+            .header p { color: #eaf2eb; margin: 8px 0 0; font-size: 14px; }
+            .content { padding: 32px 24px; }
+            .content p { line-height: 1.6; margin: 0 0 16px; }
+            .btn { display: inline-block; background: #4e6b53; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 8px 4px; }
+            .btn-danger { background: #9b4444; }
+            .info-box { background: #eaf2eb; border-left: 4px solid #4e6b53; padding: 16px; border-radius: 4px; margin: 16px 0; }
+            .footer { background: #f9f6f0; padding: 20px 24px; text-align: center; font-size: 12px; color: #6b6b6b; border-top: 1px solid #ddd5c8; }
           </style>
         </head>
         <body>
@@ -86,7 +86,7 @@ public class EmailService
               <p>Patientenportal</p>
             </div>
             <div class="content">
-              {bodyContent}
+              {{bodyContent}}
             </div>
             <div class="footer">
               <p>Naturheilpraxis Hilfreich &bull; Patientenportal</p>
