@@ -129,7 +129,7 @@
                 ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(1800)
             });
 
-        var redirectUrl = benutzer.Rolle == "admin" ? "/admin" : "/dashboard";
+        var redirectUrl = "/dashboard";
         Navigation.NavigateTo(redirectUrl, forceLoad: true);
     }
 

@@ -116,6 +116,141 @@ public static class ApiV1Endpoints
             }));
         });
 
+        // POST /api/v1/patienten/{id}/dokumente  (multipart upload from PraxisVerwaltung)
+        group.MapPost("/patienten/{id}/dokumente", async (
+            string id, AppDbContext db, HttpContext httpContext,
+            IServiceProvider sp) =>
+        {
+            var patient = await db.Benutzer.FirstOrDefaultAsync(b => b.Id == id && b.Rolle == "patient");
+            if (patient == null) return Results.NotFound();
+
+            if (!httpContext.Request.HasFormContentType)
+                return Results.BadRequest("Multipart-Formular erwartet.");
+
+            var form = await httpContext.Request.ReadFormAsync();
+            var file = form.Files["datei"];
+            if (file == null) return Results.BadRequest("Kein Datei-Feld 'datei'.");
+
+            var kategorie = form["kategorie"].FirstOrDefault() ?? "sonstiges";
+            var name = form["name"].FirstOrDefault() ?? file.FileName;
+            var hochgeladenVonName = form["vonName"].FirstOrDefault() ?? "Praxis";
+
+            var storageSvc = sp.GetRequiredService<PatientenPortal.Services.StorageService>();
+            string relativePath;
+            using (var stream = file.OpenReadStream())
+                relativePath = await storageSvc.SaveAsync(stream, file.FileName);
+
+            var doc = new Dokument
+            {
+                Id = NewId(),
+                PatientId = id,
+                Name = name,
+                Kategorie = kategorie,
+                Dateipfad = relativePath,
+                Dateigroesse = file.Length,
+                MimeType = file.ContentType,
+                HochgeladenVon = "praxis",
+                HochgeladenVonName = hochgeladenVonName,
+                Erstellt = DateTime.UtcNow
+            };
+            db.Dokumente.Add(doc);
+            await db.SaveChangesAsync();
+
+            return Results.Created($"/api/v1/dokumente/{doc.Id}", new
+            {
+                doc.Id, doc.PatientId, doc.Name, doc.Kategorie,
+                doc.Dateigroesse, doc.MimeType, doc.Erstellt
+            });
+        });
+
+        // DELETE /api/v1/dokumente/{id}
+        group.MapDelete("/dokumente/{id}", async (string id, AppDbContext db, IServiceProvider sp) =>
+        {
+            var doc = await db.Dokumente.FindAsync(id);
+            if (doc == null) return Results.NotFound();
+
+            var storageSvc = sp.GetRequiredService<PatientenPortal.Services.StorageService>();
+            storageSvc.Delete(doc.Dateipfad);
+            db.Dokumente.Remove(doc);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        });
+
+        // GET /api/v1/registrierungen  (pending registrations for PraxisVerwaltung)
+        group.MapGet("/registrierungen", async (AppDbContext db, string? status = "ausstehend") =>
+        {
+            var query = db.Registrierungen.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(r => r.Status == status);
+
+            var list = await query.OrderBy(r => r.Erstellt).ToListAsync();
+            return Results.Ok(list.Select(r => new
+            {
+                r.Id, r.Vorname, r.Nachname, r.Email, r.Geburtsdatum,
+                r.Telefon, r.Status, r.Erstellt
+            }));
+        });
+
+        // POST /api/v1/registrierungen/{id}/freischalten
+        group.MapPost("/registrierungen/{id}/freischalten", async (
+            string id, AppDbContext db, IServiceProvider sp) =>
+        {
+            var reg = await db.Registrierungen.FindAsync(id);
+            if (reg == null) return Results.NotFound();
+            if (reg.Status != "ausstehend") return Results.BadRequest("Registrierung ist nicht ausstehend.");
+
+            if (await db.Benutzer.AnyAsync(b => b.Email == reg.Email))
+                return Results.Conflict("Benutzer mit dieser E-Mail existiert bereits.");
+
+            var rng = new Random();
+            const string up = "ABCDEFGHJKLMNPQRSTUVWXYZ", lo = "abcdefghjkmnpqrstuvwxyz", di = "23456789";
+            var chars = new char[10];
+            chars[0] = up[rng.Next(up.Length)]; chars[1] = di[rng.Next(di.Length)];
+            for (int i = 2; i < 10; i++) chars[i] = (up + lo + di)[rng.Next((up + lo + di).Length)];
+            var tempPw = new string(chars.OrderBy(_ => rng.Next()).ToArray());
+
+            var user = new Benutzer
+            {
+                Id = NewId(), Email = reg.Email,
+                PasswortHash = BCrypt.Net.BCrypt.HashPassword(tempPw, 12),
+                Vorname = reg.Vorname, Nachname = reg.Nachname,
+                Geburtsdatum = reg.Geburtsdatum, Telefon = reg.Telefon,
+                Rolle = "patient", Status = "aktiv", Erstellt = DateTime.UtcNow
+            };
+            db.Benutzer.Add(user);
+            reg.Status = "freigeschaltet";
+            reg.BearbeitetAm = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            var config = sp.GetRequiredService<IConfiguration>();
+            var emailSvc = sp.GetRequiredService<PatientenPortal.Services.EmailService>();
+            var appUrl = config["AppUrl"] ?? "https://portal.seo-smp.de";
+            await emailSvc.SendFreischaltungBestaetigung(reg.Email, reg.Vorname, $"{appUrl}/login", tempPw);
+
+            return Results.Ok(new { user.Id, user.Email, user.Vorname, user.Nachname, TempPasswort = tempPw });
+        });
+
+        // POST /api/v1/registrierungen/{id}/ablehnen
+        group.MapPost("/registrierungen/{id}/ablehnen", async (
+            string id, AppDbContext db, IServiceProvider sp) =>
+        {
+            var reg = await db.Registrierungen.FindAsync(id);
+            if (reg == null) return Results.NotFound();
+            if (reg.Status != "ausstehend") return Results.BadRequest("Registrierung ist nicht ausstehend.");
+
+            reg.Status = "abgelehnt";
+            reg.BearbeitetAm = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            var config = sp.GetRequiredService<IConfiguration>();
+            var emailSvc = sp.GetRequiredService<PatientenPortal.Services.EmailService>();
+            var praxisEmail = config["EmailPraxis"] ?? "info@naturheilpraxis-hilfreich.de";
+            var praxisTel = config["PraxisTelefon"] ?? "";
+            await emailSvc.SendAblehnung(reg.Email, reg.Vorname, reg.Nachname, praxisEmail, praxisTel);
+
+            return Results.NoContent();
+        });
+
         // POST /api/v1/patienten/{id}/rechnungen
         group.MapPost("/patienten/{id}/rechnungen", async (
             string id, AppDbContext db, HttpContext httpContext) =>

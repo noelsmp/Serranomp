@@ -16,18 +16,10 @@
             </button>
 
             <div class="nav-links">
-                <AuthorizeView Roles="admin">
-                    <Authorized>
-                        <NavLink href="/admin" Match="NavLinkMatch.All" class="nav-link">Admin-Dashboard</NavLink>
-                        <NavLink href="/admin/patienten" class="nav-link">Patienten</NavLink>
-                    </Authorized>
-                    <NotAuthorized>
-                        <NavLink href="/dashboard" Match="NavLinkMatch.All" class="nav-link">Übersicht</NavLink>
-                        <NavLink href="/dokumente" class="nav-link">Dokumente</NavLink>
-                        <NavLink href="/rechnungen" class="nav-link">Rechnungen</NavLink>
-                        <NavLink href="/profil" class="nav-link">Mein Profil</NavLink>
-                    </NotAuthorized>
-                </AuthorizeView>
+                <NavLink href="/dashboard" Match="NavLinkMatch.All" class="nav-link">Übersicht</NavLink>
+                <NavLink href="/dokumente" class="nav-link">Dokumente</NavLink>
+                <NavLink href="/rechnungen" class="nav-link">Rechnungen</NavLink>
+                <NavLink href="/profil" class="nav-link">Mein Profil</NavLink>
             </div>
 
             <div class="nav-user">
