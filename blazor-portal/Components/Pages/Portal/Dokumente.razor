@@ -1,0 +1,202 @@
+@page "/dokumente"
+@rendermode InteractiveServer
+@layout PortalLayout
+@attribute [Authorize]
+@inject AppDbContext Db
+@inject StorageService StorageSvc
+@inject EmailService EmailSvc
+@inject IConfiguration Config
+
+<PageTitle>Dokumente – Patientenportal</PageTitle>
+
+<div class="page-header">
+    <h1>Meine Dokumente</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(erfolgMsg))
+{
+    <div class="alert alert-success">@erfolgMsg</div>
+}
+@if (!string.IsNullOrEmpty(fehlerMsg))
+{
+    <div class="alert alert-error">@fehlerMsg</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2>Dokument hochladen</h2>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label>Kategorie</label>
+            <select class="form-control" @bind="uploadKategorie">
+                <option value="sonstiges">Sonstiges</option>
+                <option value="anamnesebogen">Anamnesebogen</option>
+                <option value="behandlung">Behandlungsdokument</option>
+                <option value="vorlage">Vorlage</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Datei (max. 20 MB)</label>
+            <InputFile OnChange="HandleFileSelected" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-control" />
+        </div>
+        <button class="btn btn-primary" @onclick="UploadFile" disabled="@(uploadFile == null || uploading)">
+            @if (uploading)
+            {
+                <span>Hochladen...</span>
+            }
+            else
+            {
+                <span>Hochladen</span>
+            }
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Alle Dokumente (@dokumente.Count)</h2>
+    </div>
+    <div class="card-body">
+        @if (dokumente.Count == 0)
+        {
+            <p class="text-muted">Keine Dokumente vorhanden.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Kategorie</th>
+                            <th>Hochgeladen von</th>
+                            <th>Datum</th>
+                            <th>Größe</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in dokumente)
+                        {
+                            <tr>
+                                <td>@doc.Name</td>
+                                <td><span class="badge">@KategorieName(doc.Kategorie)</span></td>
+                                <td>@(doc.HochgeladenVon == "praxis" ? "Praxis" : "Patient")</td>
+                                <td>@doc.Erstellt.ToString("dd.MM.yyyy")</td>
+                                <td>@FormatGroesse(doc.Dateigroesse)</td>
+                                <td>
+                                    <a href="/api/download/@doc.Id" class="btn btn-sm btn-outline" target="_blank">
+                                        Herunterladen
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? userId;
+    private List<Dokument> dokumente = new();
+    private string uploadKategorie = "sonstiges";
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? uploadFile;
+    private bool uploading;
+    private string? erfolgMsg;
+    private string? fehlerMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        await LadeDokumente();
+    }
+
+    private async Task LadeDokumente()
+    {
+        if (userId == null) return;
+        dokumente = await System.Threading.Tasks.Task.Run(() =>
+            Db.Dokumente
+                .Where(d => d.PatientId == userId)
+                .OrderByDescending(d => d.Erstellt)
+                .ToList());
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        uploadFile = e.File;
+        fehlerMsg = null;
+    }
+
+    private async Task UploadFile()
+    {
+        if (uploadFile == null || userId == null) return;
+
+        const long maxSize = 20 * 1024 * 1024; // 20 MB
+        if (uploadFile.Size > maxSize)
+        {
+            fehlerMsg = "Die Datei ist zu groß. Maximale Dateigröße: 20 MB.";
+            return;
+        }
+
+        uploading = true;
+        fehlerMsg = null;
+        erfolgMsg = null;
+
+        try
+        {
+            using var stream = uploadFile.OpenReadStream(maxSize);
+            var relativePath = await StorageSvc.SaveAsync(stream, uploadFile.Name);
+
+            var doc = new Dokument
+            {
+                Id = Guid.NewGuid().ToString("N")[..21],
+                PatientId = userId,
+                Name = uploadFile.Name,
+                Kategorie = uploadKategorie,
+                Dateipfad = relativePath,
+                Dateigroesse = uploadFile.Size,
+                MimeType = uploadFile.ContentType,
+                HochgeladenVon = "patient",
+                Erstellt = DateTime.UtcNow
+            };
+
+            Db.Dokumente.Add(doc);
+            await Db.SaveChangesAsync();
+
+            await LadeDokumente();
+            uploadFile = null;
+            erfolgMsg = "Dokument erfolgreich hochgeladen.";
+        }
+        catch (Exception ex)
+        {
+            fehlerMsg = $"Fehler beim Hochladen: {ex.Message}";
+        }
+        finally
+        {
+            uploading = false;
+        }
+    }
+
+    private static string KategorieName(string k) => k switch
+    {
+        "rechnung" => "Rechnung",
+        "anamnesebogen" => "Anamnesebogen",
+        "behandlung" => "Behandlung",
+        "vorlage" => "Vorlage",
+        _ => "Sonstiges"
+    };
+
+    private static string FormatGroesse(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024:F1} KB";
+        return $"{bytes / (1024.0 * 1024):F1} MB";
+    }
+}

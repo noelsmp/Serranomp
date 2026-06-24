@@ -1,0 +1,430 @@
+@page "/admin/patienten/{Id}"
+@rendermode InteractiveServer
+@layout PortalLayout
+@attribute [Authorize(Roles = "admin")]
+@inject AppDbContext Db
+@inject StorageService StorageSvc
+@inject EmailService EmailSvc
+@inject IConfiguration Config
+@inject NavigationManager Navigation
+
+<PageTitle>Patient – Admin</PageTitle>
+
+@if (patient == null)
+{
+    <div class="loading">Laden...</div>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <a href="/admin/patienten" class="btn btn-sm btn-outline mb-2">&larr; Zurück zur Liste</a>
+            <h1>@patient.Vorname @patient.Nachname</h1>
+            <span class="badge @(patient.Status == "aktiv" ? "badge-success" : "badge-error")">@patient.Status</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(erfolgMsg))
+    {
+        <div class="alert alert-success">@erfolgMsg</div>
+    }
+    @if (!string.IsNullOrEmpty(fehlerMsg))
+    {
+        <div class="alert alert-error">@fehlerMsg</div>
+    }
+
+    <div class="grid-2col">
+        <!-- Patient Info -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Patientendaten bearbeiten</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Vorname</label>
+                    <input type="text" class="form-control" @bind="editVorname" />
+                </div>
+                <div class="form-group">
+                    <label>Nachname</label>
+                    <input type="text" class="form-control" @bind="editNachname" />
+                </div>
+                <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" class="form-control" @bind="editTelefon" />
+                </div>
+                <div class="form-group">
+                    <label>Geburtsdatum</label>
+                    <input type="date" class="form-control" @bind="editGeburtsdatum" />
+                </div>
+                <div class="form-group">
+                    <label>Patienten-Nr.</label>
+                    <input type="text" class="form-control" @bind="editPatientNr" />
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="form-control" @bind="editStatus">
+                        <option value="aktiv">Aktiv</option>
+                        <option value="gesperrt">Gesperrt</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" @onclick="PatientSpeichern">Speichern</button>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Kontoinformationen</h2>
+            </div>
+            <div class="card-body">
+                <dl class="info-list">
+                    <dt>E-Mail</dt>
+                    <dd>@patient.Email</dd>
+                    <dt>Rolle</dt>
+                    <dd>@patient.Rolle</dd>
+                    <dt>Registriert</dt>
+                    <dd>@patient.Erstellt.ToString("dd.MM.yyyy HH:mm")</dd>
+                    <dt>Letzter Login</dt>
+                    <dd>@(patient.LetzterLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Noch nie")</dd>
+                    <dt>Dokumente</dt>
+                    <dd>@dokumente.Count</dd>
+                    <dt>Rechnungen</dt>
+                    <dd>@rechnungen.Count</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Dokumente (@dokumente.Count)</h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h3>Dokument hochladen</h3>
+                <div class="form-group">
+                    <label>Kategorie</label>
+                    <select class="form-control" @bind="uploadKategorie">
+                        <option value="sonstiges">Sonstiges</option>
+                        <option value="rechnung">Rechnung</option>
+                        <option value="anamnesebogen">Anamnesebogen</option>
+                        <option value="behandlung">Behandlungsdokument</option>
+                        <option value="vorlage">Vorlage</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Datei (max. 20 MB)</label>
+                    <InputFile OnChange="HandleFileSelected" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-control" />
+                </div>
+                <button class="btn btn-primary" @onclick="DokumentHochladen" disabled="@(uploadFile == null || uploading)">
+                    @(uploading ? "Hochladen..." : "Hochladen")
+                </button>
+            </div>
+
+            @if (dokumente.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Kategorie</th>
+                                <th>Hochgeladen von</th>
+                                <th>Datum</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in dokumente)
+                            {
+                                <tr>
+                                    <td>@doc.Name</td>
+                                    <td><span class="badge">@doc.Kategorie</span></td>
+                                    <td>@(doc.HochgeladenVon == "praxis" ? "Praxis" : "Patient")</td>
+                                    <td>@doc.Erstellt.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <a href="/api/download/@doc.Id" class="btn btn-sm btn-outline" target="_blank">DL</a>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => DokumentLoeschen(doc)">Löschen</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Invoices -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Rechnungen (@rechnungen.Count)</h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <h3>Neue Rechnung erstellen</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Rechnungs-Nr.</label>
+                        <input type="text" class="form-control" @bind="neueRechnungNr" />
+                    </div>
+                    <div class="form-group">
+                        <label>Betrag (€)</label>
+                        <input type="number" step="0.01" min="0" class="form-control" @bind="neueBetrag" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ausstellungsdatum</label>
+                        <input type="date" class="form-control" @bind="neueAusstellungsdatum" />
+                    </div>
+                    <div class="form-group">
+                        <label>Fälligkeitsdatum</label>
+                        <input type="date" class="form-control" @bind="neueFaelligkeitsdatum" />
+                    </div>
+                </div>
+                <div class="form-check mb-2">
+                    <input type="checkbox" id="bezahlt" class="form-check-input" @bind="neueBezahlt" />
+                    <label for="bezahlt">Bereits bezahlt</label>
+                </div>
+                <button class="btn btn-primary" @onclick="RechnungErstellen">Rechnung erstellen</button>
+            </div>
+
+            @if (rechnungen.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nr.</th>
+                                <th>Ausgestellt</th>
+                                <th>Fällig</th>
+                                <th>Betrag</th>
+                                <th>Bezahlt</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in rechnungen)
+                            {
+                                <tr>
+                                    <td>@r.Rechnungsnr</td>
+                                    <td>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</td>
+                                    <td>@r.Faelligkeitsdatum.ToString("dd.MM.yyyy")</td>
+                                    <td>@r.Gesamtbetrag.ToString("N2") €</td>
+                                    <td>
+                                        <input type="checkbox" checked="@r.Bezahlt"
+                                               @onchange="(e) => RechnungBezahltToggle(r, (bool)(e.Value ?? false))" />
+                                    </td>
+                                    <td>
+                                        @if (r.DokumentId != null)
+                                        {
+                                            <a href="/api/download/@r.DokumentId" class="btn btn-sm btn-outline" target="_blank">DL</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? adminId;
+    private Data.Models.Benutzer? patient;
+    private List<Dokument> dokumente = new();
+    private List<Rechnung> rechnungen = new();
+
+    // Edit patient fields
+    private string editVorname = string.Empty;
+    private string editNachname = string.Empty;
+    private string? editTelefon;
+    private DateTime? editGeburtsdatum;
+    private string? editPatientNr;
+    private string editStatus = "aktiv";
+
+    // Upload
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? uploadFile;
+    private string uploadKategorie = "sonstiges";
+    private bool uploading;
+
+    // New invoice
+    private string neueRechnungNr = string.Empty;
+    private decimal neueBetrag;
+    private DateTime neueAusstellungsdatum = DateTime.Today;
+    private DateTime neueFaelligkeitsdatum = DateTime.Today.AddDays(30);
+    private bool neueBezahlt;
+
+    private string? erfolgMsg;
+    private string? fehlerMsg;
+
+    private static string NewId() => Guid.NewGuid().ToString("N")[..21];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        adminId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        await LadeDaten();
+    }
+
+    private async Task LadeDaten()
+    {
+        patient = await Db.Benutzer.FindAsync(Id);
+        if (patient == null) return;
+
+        editVorname = patient.Vorname;
+        editNachname = patient.Nachname;
+        editTelefon = patient.Telefon;
+        editGeburtsdatum = patient.Geburtsdatum;
+        editPatientNr = patient.PraxisPatientNr;
+        editStatus = patient.Status;
+
+        dokumente = await System.Threading.Tasks.Task.Run(() =>
+            Db.Dokumente.Where(d => d.PatientId == Id)
+                .OrderByDescending(d => d.Erstellt).ToList());
+        rechnungen = await System.Threading.Tasks.Task.Run(() =>
+            Db.Rechnungen.Where(r => r.PatientId == Id)
+                .OrderByDescending(r => r.Ausstellungsdatum).ToList());
+    }
+
+    private async Task PatientSpeichern()
+    {
+        if (patient == null) return;
+        erfolgMsg = null; fehlerMsg = null;
+
+        patient.Vorname = editVorname;
+        patient.Nachname = editNachname;
+        patient.Telefon = string.IsNullOrWhiteSpace(editTelefon) ? null : editTelefon;
+        patient.Geburtsdatum = editGeburtsdatum;
+        patient.PraxisPatientNr = string.IsNullOrWhiteSpace(editPatientNr) ? null : editPatientNr;
+        patient.Status = editStatus;
+
+        await Db.SaveChangesAsync();
+        erfolgMsg = "Patientendaten gespeichert.";
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        uploadFile = e.File;
+    }
+
+    private async Task DokumentHochladen()
+    {
+        if (uploadFile == null || patient == null) return;
+        const long maxSize = 20 * 1024 * 1024;
+        if (uploadFile.Size > maxSize)
+        {
+            fehlerMsg = "Datei zu groß (max. 20 MB).";
+            return;
+        }
+
+        uploading = true;
+        fehlerMsg = null;
+        try
+        {
+            using var stream = uploadFile.OpenReadStream(maxSize);
+            var relativePath = await StorageSvc.SaveAsync(stream, uploadFile.Name);
+
+            var doc = new Dokument
+            {
+                Id = NewId(),
+                PatientId = Id,
+                Name = uploadFile.Name,
+                Kategorie = uploadKategorie,
+                Dateipfad = relativePath,
+                Dateigroesse = uploadFile.Size,
+                MimeType = uploadFile.ContentType,
+                HochgeladenVon = "praxis",
+                HochgeladenVonName = "Admin",
+                Erstellt = DateTime.UtcNow
+            };
+            Db.Dokumente.Add(doc);
+            await Db.SaveChangesAsync();
+
+            var appUrl = Config["AppUrl"] ?? "https://portal.seo-smp.de";
+            await EmailSvc.SendDokumentBereitgestellt(
+                patient.Email, patient.Vorname, doc.Name,
+                KategorieName(doc.Kategorie), $"{appUrl}/dokumente");
+
+            uploadFile = null;
+            await LadeDaten();
+            erfolgMsg = "Dokument hochgeladen.";
+        }
+        catch (Exception ex)
+        {
+            fehlerMsg = $"Fehler: {ex.Message}";
+        }
+        finally
+        {
+            uploading = false;
+        }
+    }
+
+    private async Task DokumentLoeschen(Dokument doc)
+    {
+        StorageSvc.Delete(doc.Dateipfad);
+        Db.Dokumente.Remove(doc);
+        await Db.SaveChangesAsync();
+        await LadeDaten();
+        erfolgMsg = "Dokument gelöscht.";
+    }
+
+    private async Task RechnungErstellen()
+    {
+        if (patient == null) return;
+        fehlerMsg = null;
+
+        if (string.IsNullOrWhiteSpace(neueRechnungNr))
+            neueRechnungNr = $"RE-{DateTime.UtcNow:yyyyMMdd}-{NewId()[..6].ToUpper()}";
+
+        var rechnung = new Rechnung
+        {
+            Id = NewId(),
+            PatientId = Id,
+            Rechnungsnr = neueRechnungNr,
+            Ausstellungsdatum = neueAusstellungsdatum,
+            Faelligkeitsdatum = neueFaelligkeitsdatum,
+            Gesamtbetrag = neueBetrag,
+            Bezahlt = neueBezahlt,
+            BezahltAm = neueBezahlt ? DateTime.UtcNow : null,
+            Erstellt = DateTime.UtcNow
+        };
+        Db.Rechnungen.Add(rechnung);
+        await Db.SaveChangesAsync();
+
+        neueRechnungNr = string.Empty;
+        neueBetrag = 0;
+        neueAusstellungsdatum = DateTime.Today;
+        neueFaelligkeitsdatum = DateTime.Today.AddDays(30);
+        neueBezahlt = false;
+
+        await LadeDaten();
+        erfolgMsg = "Rechnung erstellt.";
+    }
+
+    private async Task RechnungBezahltToggle(Rechnung r, bool bezahlt)
+    {
+        r.Bezahlt = bezahlt;
+        r.BezahltAm = bezahlt ? DateTime.UtcNow : null;
+        await Db.SaveChangesAsync();
+        erfolgMsg = bezahlt ? "Rechnung als bezahlt markiert." : "Rechnung als offen markiert.";
+    }
+
+    private static string KategorieName(string k) => k switch
+    {
+        "rechnung" => "Rechnung",
+        "anamnesebogen" => "Anamnesebogen",
+        "behandlung" => "Behandlung",
+        "vorlage" => "Vorlage",
+        _ => "Sonstiges"
+    };
+}

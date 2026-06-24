@@ -1,0 +1,123 @@
+@page "/rechnungen"
+@rendermode InteractiveServer
+@layout PortalLayout
+@attribute [Authorize]
+@inject AppDbContext Db
+
+<PageTitle>Rechnungen – Patientenportal</PageTitle>
+
+<div class="page-header">
+    <h1>Meine Rechnungen</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Alle Rechnungen (@rechnungen.Count)</h2>
+        @if (offene > 0)
+        {
+            <span class="badge badge-warning">@offene offen</span>
+        }
+    </div>
+    <div class="card-body">
+        @if (rechnungen.Count == 0)
+        {
+            <p class="text-muted">Keine Rechnungen vorhanden.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Rechnungs-Nr.</th>
+                            <th>Ausgestellt</th>
+                            <th>Fällig am</th>
+                            <th>Betrag</th>
+                            <th>Status</th>
+                            <th>Dokument</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in rechnungen)
+                        {
+                            <tr class="@(r.Bezahlt ? "" : IsOverdue(r) ? "row-overdue" : "row-open")">
+                                <td>@r.Rechnungsnr</td>
+                                <td>@r.Ausstellungsdatum.ToString("dd.MM.yyyy")</td>
+                                <td>@r.Faelligkeitsdatum.ToString("dd.MM.yyyy")</td>
+                                <td class="text-right">@r.Gesamtbetrag.ToString("N2") €</td>
+                                <td>
+                                    @if (r.Bezahlt)
+                                    {
+                                        <span class="badge badge-success">Bezahlt</span>
+                                        @if (r.BezahltAm.HasValue)
+                                        {
+                                            <small class="text-muted"> am @r.BezahltAm.Value.ToString("dd.MM.yyyy")</small>
+                                        }
+                                    }
+                                    else if (IsOverdue(r))
+                                    {
+                                        <span class="badge badge-error">Überfällig</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-warning">Offen</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (r.DokumentId != null)
+                                    {
+                                        <a href="/api/download/@r.DokumentId" class="btn btn-sm btn-outline" target="_blank">
+                                            Herunterladen
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">–</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Gesamt offen:</strong></td>
+                            <td class="text-right"><strong>@offenBetrag.ToString("N2") €</strong></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? userId;
+    private List<Rechnung> rechnungen = new();
+    private int offene;
+    private decimal offenBetrag;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        await LadeRechnungen();
+    }
+
+    private async Task LadeRechnungen()
+    {
+        if (userId == null) return;
+        rechnungen = await System.Threading.Tasks.Task.Run(() =>
+            Db.Rechnungen
+                .Where(r => r.PatientId == userId)
+                .OrderByDescending(r => r.Ausstellungsdatum)
+                .ToList());
+        offene = rechnungen.Count(r => !r.Bezahlt);
+        offenBetrag = rechnungen.Where(r => !r.Bezahlt).Sum(r => r.Gesamtbetrag);
+    }
+
+    private static bool IsOverdue(Rechnung r) => !r.Bezahlt && r.Faelligkeitsdatum < DateTime.UtcNow;
+}

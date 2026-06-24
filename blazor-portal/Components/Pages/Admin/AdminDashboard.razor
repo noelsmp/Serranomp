@@ -1,0 +1,231 @@
+@page "/admin"
+@rendermode InteractiveServer
+@layout PortalLayout
+@attribute [Authorize(Roles = "admin")]
+@inject AppDbContext Db
+@inject EmailService EmailSvc
+@inject AuditService AuditSvc
+@inject IConfiguration Config
+
+<PageTitle>Admin-Dashboard – Patientenportal</PageTitle>
+
+<div class="page-header">
+    <h1>Admin-Dashboard</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(erfolgMsg))
+{
+    <div class="alert alert-success">@erfolgMsg</div>
+}
+@if (!string.IsNullOrEmpty(fehlerMsg))
+{
+    <div class="alert alert-error">@fehlerMsg</div>
+}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">@patientCount</div>
+        <div class="stat-label">Patienten</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">@dokumentCount</div>
+        <div class="stat-label">Dokumente gesamt</div>
+    </div>
+    <div class="stat-card @(pendingCount > 0 ? "stat-card-warning" : "")">
+        <div class="stat-number">@pendingCount</div>
+        <div class="stat-label">Ausstehende Anfragen</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Ausstehende Registrierungsanfragen</h2>
+    </div>
+    <div class="card-body">
+        @if (pendingRegistrierungen.Count == 0)
+        {
+            <p class="text-muted">Keine ausstehenden Registrierungsanfragen.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>E-Mail</th>
+                            <th>Geburtsdatum</th>
+                            <th>Telefon</th>
+                            <th>Datum</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reg in pendingRegistrierungen)
+                        {
+                            <tr>
+                                <td>@reg.Vorname @reg.Nachname</td>
+                                <td>@reg.Email</td>
+                                <td>@reg.Geburtsdatum.ToString("dd.MM.yyyy")</td>
+                                <td>@(reg.Telefon ?? "–")</td>
+                                <td>@reg.Erstellt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary"
+                                            @onclick="() => Freischalten(reg)"
+                                            disabled="@bearbeitung">
+                                        Freischalten
+                                    </button>
+                                    <button class="btn btn-sm btn-danger"
+                                            @onclick="() => Ablehnen(reg)"
+                                            disabled="@bearbeitung">
+                                        Ablehnen
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? adminId;
+    private int patientCount;
+    private int dokumentCount;
+    private int pendingCount;
+    private List<Data.Models.Registrierung> pendingRegistrierungen = new();
+    private bool bearbeitung;
+    private string? erfolgMsg;
+    private string? fehlerMsg;
+
+    private static string NewId() => Guid.NewGuid().ToString("N")[..21];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        adminId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        await LadeDaten();
+    }
+
+    private async Task LadeDaten()
+    {
+        patientCount = await System.Threading.Tasks.Task.Run(() =>
+            Db.Benutzer.Count(b => b.Rolle == "patient"));
+        dokumentCount = await System.Threading.Tasks.Task.Run(() => Db.Dokumente.Count());
+        pendingRegistrierungen = await System.Threading.Tasks.Task.Run(() =>
+            Db.Registrierungen
+                .Where(r => r.Status == "ausstehend")
+                .OrderBy(r => r.Erstellt)
+                .ToList());
+        pendingCount = pendingRegistrierungen.Count;
+    }
+
+    private async Task Freischalten(Data.Models.Registrierung reg)
+    {
+        bearbeitung = true;
+        erfolgMsg = null;
+        fehlerMsg = null;
+
+        try
+        {
+            var existingUser = Db.Benutzer.Any(b => b.Email == reg.Email);
+            if (existingUser)
+            {
+                fehlerMsg = $"Benutzer mit E-Mail {reg.Email} existiert bereits.";
+                return;
+            }
+
+            var tempPassword = GenerateTempPassword();
+            var newUser = new Data.Models.Benutzer
+            {
+                Id = NewId(),
+                Email = reg.Email,
+                PasswortHash = BCrypt.Net.BCrypt.HashPassword(tempPassword, 12),
+                Vorname = reg.Vorname,
+                Nachname = reg.Nachname,
+                Geburtsdatum = reg.Geburtsdatum,
+                Telefon = reg.Telefon,
+                Rolle = "patient",
+                Status = "aktiv",
+                Erstellt = DateTime.UtcNow
+            };
+            Db.Benutzer.Add(newUser);
+
+            reg.Status = "freigeschaltet";
+            reg.BearbeitetAm = DateTime.UtcNow;
+            reg.BearbeitetVon = adminId;
+            await Db.SaveChangesAsync();
+
+            await AuditSvc.LogAsync(Db, adminId, "patient_freigeschaltet",
+                $"Patient {reg.Email} durch Admin freigeschaltet");
+
+            var appUrl = Config["AppUrl"] ?? "https://portal.seo-smp.de";
+            await EmailSvc.SendFreischaltungBestaetigung(
+                reg.Email, reg.Vorname, $"{appUrl}/login", tempPassword);
+
+            await LadeDaten();
+            erfolgMsg = $"{reg.Vorname} {reg.Nachname} wurde erfolgreich freigeschaltet.";
+        }
+        catch (Exception ex)
+        {
+            fehlerMsg = $"Fehler: {ex.Message}";
+        }
+        finally
+        {
+            bearbeitung = false;
+        }
+    }
+
+    private async Task Ablehnen(Data.Models.Registrierung reg)
+    {
+        bearbeitung = true;
+        erfolgMsg = null;
+        fehlerMsg = null;
+
+        try
+        {
+            reg.Status = "abgelehnt";
+            reg.BearbeitetAm = DateTime.UtcNow;
+            reg.BearbeitetVon = adminId;
+            await Db.SaveChangesAsync();
+
+            await AuditSvc.LogAsync(Db, adminId, "registrierung_abgelehnt",
+                $"Registrierung von {reg.Email} abgelehnt");
+
+            var praxisEmail = Config["EmailPraxis"] ?? "info@naturheilpraxis-hilfreich.de";
+            var praxisTel = Config["PraxisTelefon"] ?? "";
+            await EmailSvc.SendAblehnung(reg.Email, reg.Vorname, reg.Nachname, praxisEmail, praxisTel);
+
+            await LadeDaten();
+            erfolgMsg = $"Registrierungsanfrage von {reg.Vorname} {reg.Nachname} wurde abgelehnt.";
+        }
+        catch (Exception ex)
+        {
+            fehlerMsg = $"Fehler: {ex.Message}";
+        }
+        finally
+        {
+            bearbeitung = false;
+        }
+    }
+
+    private static string GenerateTempPassword()
+    {
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghjkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string all = upper + lower + digits;
+        var rng = new Random();
+        var chars = new char[10];
+        chars[0] = upper[rng.Next(upper.Length)];
+        chars[1] = digits[rng.Next(digits.Length)];
+        for (int i = 2; i < 10; i++)
+            chars[i] = all[rng.Next(all.Length)];
+        return new string(chars.OrderBy(_ => rng.Next()).ToArray());
+    }
+}

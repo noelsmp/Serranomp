@@ -1,0 +1,178 @@
+@page "/registrierung"
+@layout AuthLayout
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+@inject AppDbContext Db
+@inject EmailService EmailSvc
+@inject IConfiguration Config
+
+<PageTitle>Registrieren – Patientenportal</PageTitle>
+
+<h2>Registrierung</h2>
+
+@if (erfolgreich)
+{
+    <div class="alert alert-success">
+        <strong>Registrierung eingegangen!</strong>
+        <p>Ihre Anfrage wurde übermittelt. Wir prüfen Ihre Angaben und schalten Ihren Zugang so bald wie möglich frei. Sie erhalten eine E-Mail, sobald Ihr Konto aktiviert wurde.</p>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(fehler))
+    {
+        <div class="alert alert-error">@fehler</div>
+    }
+
+    <p class="form-intro">Um das Patientenportal zu nutzen, müssen Sie bereits Patient in unserer Praxis sein. Wir überprüfen Ihre Angaben und schalten Ihren Zugang manuell frei.</p>
+
+    <form method="post" @formname="registrierung">
+        <AntiforgeryToken />
+        <div class="form-row">
+            <div class="form-group">
+                <label for="vorname">Vorname *</label>
+                <input id="vorname" type="text" name="Input.Vorname" value="@Input.Vorname"
+                       class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="nachname">Nachname *</label>
+                <input id="nachname" type="text" name="Input.Nachname" value="@Input.Nachname"
+                       class="form-control" required />
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="email">E-Mail-Adresse *</label>
+            <input id="email" type="email" name="Input.Email" value="@Input.Email"
+                   class="form-control" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+            <label for="geburtsdatum">Geburtsdatum *</label>
+            <input id="geburtsdatum" type="date" name="Input.Geburtsdatum" value="@Input.Geburtsdatum"
+                   class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="telefon">Telefon</label>
+            <input id="telefon" type="tel" name="Input.Telefon" value="@Input.Telefon"
+                   class="form-control" />
+        </div>
+        <div class="form-check">
+            <input id="datenschutz" type="checkbox" name="Input.Datenschutz" value="true"
+                   class="form-check-input" required />
+            <label for="datenschutz">Ich habe die <a href="/datenschutz" target="_blank">Datenschutzerklärung</a> gelesen und stimme der Verarbeitung meiner Daten zu. *</label>
+        </div>
+        <div class="form-check">
+            <input id="nutzungsbedingungen" type="checkbox" name="Input.Nutzungsbedingungen" value="true"
+                   class="form-check-input" required />
+            <label for="nutzungsbedingungen">Ich akzeptiere die <a href="/nutzungsbedingungen" target="_blank">Nutzungsbedingungen</a>. *</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Registrierung absenden</button>
+    </form>
+
+    <div class="auth-links">
+        <a href="/login">Bereits registriert? Anmelden</a>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private RegistrierungInput Input { get; set; } = new();
+
+    private bool erfolgreich;
+    private string? fehler;
+
+    private static string NewId() => Guid.NewGuid().ToString("N")[..21];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext == null) return;
+        if (httpContext.Request.Method == "POST")
+            await HandleRegistrierung();
+    }
+
+    private async Task HandleRegistrierung()
+    {
+        if (string.IsNullOrWhiteSpace(Input.Vorname) || string.IsNullOrWhiteSpace(Input.Nachname))
+        {
+            fehler = "Bitte Vor- und Nachname eingeben.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Input.Email))
+        {
+            fehler = "Bitte E-Mail-Adresse eingeben.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Input.Geburtsdatum))
+        {
+            fehler = "Bitte Geburtsdatum angeben.";
+            return;
+        }
+        if (!Input.Datenschutz || !Input.Nutzungsbedingungen)
+        {
+            fehler = "Bitte stimmen Sie Datenschutzerklärung und Nutzungsbedingungen zu.";
+            return;
+        }
+
+        var existingUser = Db.Benutzer.Any(b => b.Email.ToLower() == Input.Email.ToLower().Trim());
+        if (existingUser)
+        {
+            fehler = "Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an oder verwenden Sie 'Passwort vergessen'.";
+            return;
+        }
+
+        var existingReg = Db.Registrierungen.Any(r =>
+            r.Email.ToLower() == Input.Email.ToLower().Trim() && r.Status == "ausstehend");
+        if (existingReg)
+        {
+            fehler = "Für diese E-Mail-Adresse liegt bereits eine ausstehende Registrierungsanfrage vor.";
+            return;
+        }
+
+        if (!DateTime.TryParse(Input.Geburtsdatum, out var geb))
+        {
+            fehler = "Ungültiges Geburtsdatum.";
+            return;
+        }
+
+        var token = NewId() + NewId();
+        var reg = new Data.Models.Registrierung
+        {
+            Id = NewId(),
+            Vorname = Input.Vorname.Trim(),
+            Nachname = Input.Nachname.Trim(),
+            Email = Input.Email.Trim().ToLower(),
+            Geburtsdatum = geb,
+            Telefon = string.IsNullOrWhiteSpace(Input.Telefon) ? null : Input.Telefon.Trim(),
+            DatenschutzZugestimmt = Input.Datenschutz,
+            NutzungsbedingungenZugestimmt = Input.Nutzungsbedingungen,
+            Status = "ausstehend",
+            Token = token,
+            Erstellt = DateTime.UtcNow
+        };
+
+        Db.Registrierungen.Add(reg);
+        await Db.SaveChangesAsync();
+
+        var appUrl = Config["AppUrl"] ?? "https://portal.seo-smp.de";
+        var adminEmail = Config["EmailPraxis"] ?? Config["AdminEmail"] ?? "info@naturheilpraxis-hilfreich.de";
+        var freischaltenLink = $"{appUrl}/api/freischaltung?token={token}&aktion=freischalten";
+        var ablehnenLink = $"{appUrl}/api/freischaltung?token={token}&aktion=ablehnen";
+
+        await EmailSvc.SendRegistrierungsbestaetigung(
+            adminEmail, reg.Vorname, reg.Nachname, reg.Email,
+            freischaltenLink, ablehnenLink);
+
+        erfolgreich = true;
+    }
+
+    private class RegistrierungInput
+    {
+        public string Vorname { get; set; } = string.Empty;
+        public string Nachname { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Geburtsdatum { get; set; } = string.Empty;
+        public string? Telefon { get; set; }
+        public bool Datenschutz { get; set; }
+        public bool Nutzungsbedingungen { get; set; }
+    }
+}
