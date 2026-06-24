@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { FileText, Receipt, LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
+import { FileText, Receipt, LayoutDashboard, LogOut, Menu, X, UserCircle } from 'lucide-react'
 import { useState } from 'react'
 
 interface NavigationProps {
@@ -16,6 +16,7 @@ const patientLinks = [
   { href: '/dashboard', label: 'Übersicht', icon: LayoutDashboard },
   { href: '/dokumente', label: 'Dokumente', icon: FileText },
   { href: '/rechnungen', label: 'Rechnungen', icon: Receipt },
+  { href: '/profil', label: 'Mein Profil', icon: UserCircle },
 ]
 
 const adminLinks = [
