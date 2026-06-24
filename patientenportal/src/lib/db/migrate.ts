@@ -78,11 +78,19 @@ const TABELLEN = [
     ablauf TEXT NOT NULL,
     erstellt TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
+  `CREATE TABLE IF NOT EXISTS passwort_reset_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES benutzer(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    ablauf TEXT NOT NULL,
+    erstellt TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
   `CREATE INDEX IF NOT EXISTS idx_dokumente_patient ON dokumente(patient_id)`,
   `CREATE INDEX IF NOT EXISTS idx_rechnungen_patient ON rechnungen(patient_id)`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`,
   `CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_registrierungen_status ON registrierungen(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON passwort_reset_tokens(token)`,
   `PRAGMA journal_mode = WAL`,
   `PRAGMA foreign_keys = ON`,
 ]

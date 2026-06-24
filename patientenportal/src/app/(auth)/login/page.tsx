@@ -2,16 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [passwort, setPasswort] = useState('')
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState('')
+
+  const passwortGeaendert = searchParams.get('passwort-geaendert') === '1'
 
   async function anmelden(e: React.FormEvent) {
     e.preventDefault()
@@ -47,6 +51,12 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={anmelden} className="px-6 py-6 space-y-4">
+          {passwortGeaendert && (
+            <div className="bg-sage-lt border border-sage rounded px-4 py-3 font-sans text-sm text-sage-dk">
+              Ihr Passwort wurde erfolgreich geändert. Bitte melden Sie sich an.
+            </div>
+          )}
+
           <Input
             label="E-Mail-Adresse"
             type="email"
@@ -56,14 +66,22 @@ export default function LoginPage() {
             autoComplete="email"
             placeholder="ihre@email.de"
           />
-          <Input
-            label="Passwort"
-            type="password"
-            value={passwort}
-            onChange={e => setPasswort(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
+
+          <div>
+            <Input
+              label="Passwort"
+              type="password"
+              value={passwort}
+              onChange={e => setPasswort(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+            <div className="text-right mt-1">
+              <Link href="/passwort-vergessen" className="font-sans text-xs text-sage hover:text-sage-dk">
+                Passwort vergessen?
+              </Link>
+            </div>
+          </div>
 
           {fehler && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded px-4 py-3 text-sm font-sans">
@@ -91,5 +109,13 @@ export default function LoginPage() {
         der Naturheilpraxis Hilfreich.
       </p>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
