@@ -54,7 +54,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
-    await DbSeeder.SeedAsync(db, builder.Configuration);
+    await DbSeeder.SeedAsync(db, builder.Configuration, scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>());
 }
 
 if (!app.Environment.IsDevelopment())
