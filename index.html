@@ -82,6 +82,15 @@
 
     .nav-links a:hover { color: var(--sage); }
 
+    .nav-cta {
+      background: var(--sage);
+      color: #fff !important;
+      padding: 0.35rem 0.9rem;
+      border-radius: 4px;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--sage-dk) !important; color: #fff !important; }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -590,7 +599,36 @@
       color: rgba(255,255,255,0.4);
     }
 
-    /* ── MOBILE ── */
+    /* ── HERO LAYOUT ── */
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 3rem;
+      align-items: center;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .hero-photo {
+      width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+
+    @media (max-width: 820px) {
+      .hero-layout {
+        grid-template-columns: 1fr;
+      }
+      .hero-photo {
+        max-width: 280px;
+        margin: 0 auto;
+        display: block;
+        aspect-ratio: 1/1;
+        object-position: center top;
+      }
+    }
     @media (max-width: 768px) {
       .nav-links {
         display: none;
@@ -620,7 +658,7 @@
 <!-- NAVIGATION -->
 <nav>
   <a class="nav-logo" href="#start">
-    <img src="logo.jpg" alt="Naturheilpraxis Hilfreich Logo">
+    <img src="logo.png" alt="Naturheilpraxis Hilfreich Logo">
     <span class="nav-logo-text">Naturheilpraxis<br>Hilfreich</span>
   </a>
   <ul class="nav-links" id="navLinks">
@@ -631,6 +669,8 @@
     <li><a href="#uebermich" onclick="closeNav()">Über mich</a></li>
     <li><a href="#faq" onclick="closeNav()">FAQ</a></li>
     <li><a href="#kontakt" onclick="closeNav()">Kontakt</a></li>
+    <li><a href="#impressum" onclick="closeNav()">Impressum</a></li>
+    <li><a href="https://pportal2.weltland.net" class="nav-cta" onclick="closeNav()" target="_blank" rel="noopener">Patientenportal</a></li>
   </ul>
   <button class="hamburger" id="hamburger" aria-label="Menü" onclick="toggleNav()">
     <span></span><span></span><span></span>
@@ -639,30 +679,33 @@
 
 <!-- HERO -->
 <section id="start">
-  <div class="hero-inner">
-    <img src="logo.jpg" alt="Naturheilpraxis Hilfreich" style="height:90px;width:auto;object-fit:contain;margin-bottom:1.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.08))">
-    <p class="hero-label">Naturheilpraxis Hilfreich · Moers</p>
-    <p class="hero-motto">Medicis curat, natura sanat.</p>
-    <h1 class="hero-title">Sympathikustherapie &amp;<br>Regulationsmedizin</h1>
-    <p class="hero-sub">
-      In meiner Praxis begleite ich Menschen mit stressbedingten Beschwerden,
-      chronischen Schmerzen und funktionellen Störungen des Nervensystems.
-    </p>
-    <p class="hero-tagline">
-      Mein Behandlungsansatz verbindet langjährige Erfahrung aus Bewegung, Prävention,
-      Ernährung und Naturheilkunde mit einem besonderen Fokus auf die Regulation des
-      Nervensystems.
-    </p>
-    <div class="hero-tags">
-      <span class="tag">15+ Jahre Erfahrung</span>
-      <span class="tag">Bewegung &amp; Training</span>
-      <span class="tag">Schmerzprävention</span>
-      <span class="tag">Ernährungsberatung</span>
-      <span class="tag">Naturheilkunde</span>
-      <span class="tag">Dozententätigkeit</span>
+  <div class="hero-layout">
+    <div>
+      <p class="hero-label">Naturheilpraxis Hilfreich · Moers</p>
+      <p class="hero-motto">Medicis curat, natura sanat. —<br><em>Der Therapeut begleitet, die Natur heilt.</em></p>
+      <h1 class="hero-title">Ganzheitlich. Individuell. Natürlich.</h1>
+      <p class="hero-sub" style="font-size:1.1rem;color:var(--text);margin-bottom:1rem">
+        Heilpraktische Begleitung für akute und chronische Beschwerden.
+      </p>
+      <p class="hero-tagline">
+        Mein Behandlungsansatz verbindet langjährige Erfahrung aus Bewegung, Prävention,
+        Ernährung und Naturheilkunde mit einem besonderen Fokus auf die Regulation des
+        Nervensystems.
+      </p>
+      <div class="hero-tags">
+        <span class="tag">15+ Jahre Erfahrung</span>
+        <span class="tag">Bewegung &amp; Training</span>
+        <span class="tag">Schmerzprävention</span>
+        <span class="tag">Ernährungsberatung</span>
+        <span class="tag">Naturheilkunde</span>
+        <span class="tag">Dozententätigkeit</span>
+      </div>
+      <a href="termin.html" class="btn">Termin buchen</a>
+      <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
     </div>
-    <a href="#kontakt" class="btn">Termin anfragen</a>
-    <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
+    <div>
+      <img src="foto-hero.jpg" alt="Lisa Serrano Martin-Prieto – Heilpraktikerin" class="hero-photo">
+    </div>
   </div>
 </section>
 
@@ -709,7 +752,6 @@
       <div class="complaint-item">Atemtherapie</div>
       <div class="complaint-item">Manuelle Regulationstechniken</div>
       <div class="complaint-item">Ernährungsberatung</div>
-      <div class="complaint-item">Blutbild- &amp; Laborbetrachtung</div>
     </div>
 
     <h3 style="margin-top:2.5rem">So läuft die Behandlung ab</h3>
@@ -732,7 +774,7 @@
     <div class="divider"></div>
 
     <p>
-      Die Sympathikustherapie nach Dr. Steinrücken stellt einen Schwerpunkt meiner Praxis dar.
+      Die Sympathikustherapie stellt einen Schwerpunkt meiner Praxis dar.
     </p>
     <p>
       Der Sympathikus ist Teil des vegetativen Nervensystems und beeinflusst zahlreiche
@@ -752,9 +794,9 @@
         festgefahrene Reaktionsmuster des Körpers positiv beeinflusst werden.
       </p>
       <p>
-        Je nach Befund können die Punkte mit speziellen Dauernadeln, Akupunkturpunkten, kleinen
-        Druckpflastern oder Dauerkugeln behandelt werden. Die Reize verbleiben dabei über einen
-        längeren Zeitraum an den entsprechenden Punkten.
+        Je nach Befund können die Punkte mit speziellen Dauernadeln, Akupunkturpunkten oder
+        Dauerkugeln behandelt werden. Die Reize verbleiben dabei über einen längeren Zeitraum
+        an den entsprechenden Punkten.
       </p>
     </div>
 
@@ -787,7 +829,7 @@
       <div class="honorar-card featured">
         <h3>Ersttermin</h3>
         <div class="honorar-price">149 €</div>
-        <div class="honorar-duration">Dauer: bis zu 60 Minuten</div>
+        <div class="honorar-duration">Dauer: bis zu 45 Minuten</div>
         <ul class="honorar-includes">
           <li>Ausführliche Anamnese</li>
           <li>Untersuchung</li>
@@ -905,7 +947,7 @@
         </button>
         <div class="faq-answer">
           <div class="faq-answer-inner">
-            Der Ersttermin dauert bis zu 60 Minuten und umfasst eine ausführliche Anamnese,
+            Der Ersttermin dauert bis zu 45 Minuten und umfasst eine ausführliche Anamnese,
             Untersuchung, Therapieplanung und gegebenenfalls eine erste Behandlung. Folgetermine
             dauern bis zu 30 Minuten.
           </div>
@@ -918,7 +960,7 @@
         </button>
         <div class="faq-answer">
           <div class="faq-answer-inner">
-            Der Ersttermin (bis zu 60 Min.) kostet 149 €, Folgetermine (bis zu 30 Min.) 95 €.
+            Der Ersttermin (bis zu 45 Min.) kostet 149 €, Folgetermine (bis zu 30 Min.) 95 €.
             Weitere Termine richten sich nach dem individuellen Aufwand.
           </div>
         </div>
@@ -998,7 +1040,10 @@
 <section id="kontakt">
   <div class="section-inner">
     <p class="section-label">Termin & Anfragen</p>
-    <h2>Kontakt</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <h2 style="margin-bottom:0">Kontakt</h2>
+      <img src="logo.png" alt="Naturheilpraxis Hilfreich" style="height:70px;width:auto;object-fit:contain">
+    </div>
     <div class="divider"></div>
 
     <div class="kontakt-layout">
@@ -1007,14 +1052,21 @@
           <div class="kontakt-icon">📍</div>
           <div>
             <strong>Praxisadresse</strong><br>
-            47443 Moers
+            Hombergerstraße 348<br>
+            47443 Moers<br>
+<span style="font-size:0.9rem;color:var(--muted)">Parken ist auf dem Parkplatz der Evangelischen Kirche möglich.</span>
+</div>
+</div>
+              
+        
+
           </div>
         </div>
         <div class="kontakt-info-item">
           <div class="kontakt-icon">✉</div>
           <div>
             <strong>E-Mail</strong><br>
-            <a href="mailto:[deine@email.de]" style="color:var(--sage)">[deine@email.de]</a>
+            <a href="mailto:info@naturheilpraxis-hilfreich.de" style="color:var(--sage)">info@naturheilpraxis-hilfreich.de</a>
           </div>
         </div>
 
@@ -1022,12 +1074,15 @@
           <strong>Bitte beachten Sie:</strong><br>
           Da ich mich während der Behandlungen und aus familiären Gründen nicht jederzeit
           telefonisch melden kann, erfolgt die Kontaktaufnahme bevorzugt per E-Mail.
-          Ich beantworte Anfragen üblicherweise innerhalb von 1–2 Werktagen.
+          Ich beantworte Anfragen üblicherweise innerhalb von 1–2 Werktagen.<br><br>
+          <strong>Hinweis zum Datenschutz:</strong> Bitte senden Sie über dieses Formular
+          <strong>keine Gesundheitsdaten, Symptome oder medizinische Informationen</strong>.
+          Nutzen Sie das Formular ausschließlich für allgemeine Terminanfragen.
         </div>
       </div>
 
       <div>
-        <form onsubmit="handleForm(event)">
+        <form action="https://formspree.io/f/mykaqerp" method="POST" onsubmit="handleForm(event)">
           <div>
             <label for="name">Name</label>
             <input type="text" id="name" name="name" required placeholder="Ihr Name">
@@ -1058,6 +1113,120 @@
   </div>
 </section>
 
+<!-- IMPRESSUM -->
+<section id="impressum">
+  <div class="section-inner">
+    <p class="section-label">Rechtliches</p>
+    <h2>Impressum</h2>
+    <div class="divider"></div>
+
+    <h3>Angaben gemäß § 5 TMG</h3>
+    <p>
+      Lisa Serrano Martin-Prieto<br>
+      Heilpraktikerin<br>
+      Hombergerstraße 348<br>
+      47443 Moers
+    </p>
+
+    <h3 style="margin-top:1.5rem">Kontakt</h3>
+    <p>
+      E-Mail: <a href="mailto:info@naturheilpraxis-hilfreich.de" style="color:var(--sage)">info@naturheilpraxis-hilfreich.de</a>
+    </p>
+
+    <h3 style="margin-top:1.5rem">Berufsbezeichnung und berufsrechtliche Regelungen</h3>
+    <p>
+      Berufsbezeichnung: Heilpraktikerin<br>
+      Verliehen in: Deutschland
+    </p>
+
+    <h3 style="margin-top:1.5rem">Zuständige Aufsichtsbehörde</h3>
+    <p>
+      Gesundheitsamt des Kreises Wesel<br>
+      Reeser Landstr. 31<br>
+      46483 Wesel
+    </p>
+
+    <h3 style="margin-top:1.5rem">Hinweis gemäß Heilmittelwerbegesetz</h3>
+    <p>
+      Die vorgestellten naturheilkundlichen Verfahren gehören zur Erfahrungsheilkunde.
+      Die beschriebenen Anwendungsgebiete beruhen auf naturheilkundlichen Erfahrungen
+      und Erkenntnissen. Diese Aussagen sind nicht durch die Schulmedizin belegt.
+    </p>
+
+    <h3 style="margin-top:1.5rem">Haftungsausschluss</h3>
+    <p>
+      Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit,
+      Vollständigkeit und Aktualität der Inhalte kann jedoch keine Gewähr übernommen werden.
+      Die auf dieser Website angebotenen Inhalte dienen ausschließlich der Information und
+      ersetzen keine ärztliche Diagnose oder Behandlung.
+    </p>
+  </div>
+</section>
+
+<!-- DATENSCHUTZ -->
+<section id="datenschutz">
+  <div class="section-inner">
+    <p class="section-label">Rechtliches</p>
+    <h2>Datenschutzerklärung</h2>
+    <div class="divider"></div>
+
+    <h3>Verantwortliche Person</h3>
+    <p>
+      Lisa Serrano Martin-Prieto<br>
+      Hombergerstraße 348, 47443 Moers<br>
+      E-Mail: <a href="mailto:info@naturheilpraxis-hilfreich.de" style="color:var(--sage)">info@naturheilpraxis-hilfreich.de</a>
+    </p>
+
+    <h3 style="margin-top:1.5rem">Kontaktformular</h3>
+    <p>
+      Das Kontaktformular dieser Website wird über den Dienst <strong>Formspree</strong>
+      (Formspree Inc., 2261 Market Street #4990, San Francisco, CA 94114, USA) verarbeitet.
+      Die von Ihnen eingegebenen Daten (Name, E-Mail-Adresse, Nachricht) werden an Server
+      von Formspree in den USA übertragen und dort gespeichert. Formspree verarbeitet diese
+      Daten ausschließlich zur Weiterleitung der Anfrage an mich und gibt sie nicht an Dritte
+      weiter. Grundlage der Verarbeitung ist Ihre ausdrückliche Einwilligung (Art. 6 Abs. 1
+      lit. a DSGVO). Weitere Informationen finden Sie in der Datenschutzerklärung von
+      Formspree: <a href="https://formspree.io/legal/privacy-policy" style="color:var(--sage)"
+      target="_blank" rel="noopener">formspree.io/legal/privacy-policy</a>.
+    </p>
+    <p>
+      Alternativ können Sie mich jederzeit direkt per E-Mail kontaktieren:
+      <a href="mailto:info@naturheilpraxis-hilfreich.de" style="color:var(--sage)">info@naturheilpraxis-hilfreich.de</a>
+    </p>
+
+    <h3 style="margin-top:1.5rem">Erhebung und Verarbeitung personenbezogener Daten</h3>
+    <p>
+      Diese Website erhebt und verarbeitet personenbezogene Daten nur, wenn Sie diese
+      freiwillig über das Kontaktformular mitteilen. Die übermittelten Daten (Name,
+      E-Mail-Adresse, Nachricht) werden ausschließlich zur Beantwortung Ihrer Anfrage
+      verwendet und nicht an Dritte weitergegeben.
+    </p>
+
+    <h3 style="margin-top:1.5rem">Hosting</h3>
+    <p>
+      Diese Website wird über GitHub Pages (GitHub Inc., 88 Colin P Kelly Jr St,
+      San Francisco, CA 94107, USA) gehostet. GitHub kann beim Zugriff auf die Website
+      technische Daten (z.B. IP-Adresse) speichern. Weitere Informationen finden Sie
+      in der Datenschutzerklärung von GitHub:
+      <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement"
+         style="color:var(--sage)" target="_blank" rel="noopener">GitHub Privacy Statement</a>.
+    </p>
+
+    <h3 style="margin-top:1.5rem">Ihre Rechte</h3>
+    <p>
+      Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der
+      Verarbeitung Ihrer gespeicherten Daten sowie das Recht auf Datenübertragbarkeit.
+      Wenden Sie sich hierzu an:
+      <a href="mailto:info@naturheilpraxis-hilfreich.de" style="color:var(--sage)">info@naturheilpraxis-hilfreich.de</a>
+    </p>
+
+    <h3 style="margin-top:1.5rem">Cookies</h3>
+    <p>
+      Diese Website verwendet keine Cookies und keine Tracking-Tools.
+    </p>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -1071,7 +1240,8 @@
     <div class="footer-col">
       <h4>Adresse</h4>
       <p>47443 Moers</p>
-      <a href="mailto:[deine@email.de]">[deine@email.de]</a>
+      <p>Hombergerstraße 348<br>47443 Moers</p>
+      <a href="mailto:info@naturheilpraxis-hilfreich.de">info@naturheilpraxis-hilfreich.de</a>
     </div>
     <div class="footer-col">
       <h4>Navigation</h4>
@@ -1082,6 +1252,8 @@
       <a href="#uebermich">Über mich</a>
       <a href="#faq">FAQ</a>
       <a href="#kontakt">Kontakt</a>
+      <a href="#impressum">Impressum</a>
+      <a href="#datenschutz">Datenschutz</a>
     </div>
     <div class="footer-col">
       <h4>Rechtliches</h4>
@@ -1093,8 +1265,8 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>&copy; 2025 Naturheilpraxis Hilfreich · Moers</span>
-    <span>Impressum &nbsp;·&nbsp; Datenschutz</span>
+    <span>&copy; 2026 Naturheilpraxis Hilfreich · Moers</span>
+    <span><a href="#impressum" style="color:rgba(255,255,255,0.4);text-decoration:none">Impressum</a> &nbsp;·&nbsp; <a href="#datenschutz" style="color:rgba(255,255,255,0.4);text-decoration:none">Datenschutz</a></span>
   </div>
 </footer>
 
@@ -1115,8 +1287,27 @@
 
   function handleForm(e) {
     e.preventDefault();
-    document.getElementById('formMsg').style.display = 'block';
-    e.target.reset();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    btn.textContent = 'Wird gesendet…';
+    btn.disabled = true;
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    }).then(response => {
+      if (response.ok) {
+        document.getElementById('formMsg').style.display = 'block';
+        form.reset();
+      } else {
+        alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+      }
+    }).catch(() => {
+      alert('Es gab ein Problem. Bitte schreiben Sie direkt an info@naturheilpraxis-hilfreich.de');
+    }).finally(() => {
+      btn.textContent = 'Anfrage senden';
+      btn.disabled = false;
+    });
   }
 
   // Active nav link on scroll
