@@ -667,6 +667,8 @@
     }
 
     .hero-photo {
+      grid-column: 2;
+      grid-row: 1;
       width: 100%;
       border-radius: 8px;
       object-fit: cover;
@@ -674,20 +676,30 @@
       box-shadow: 0 12px 40px rgba(0,0,0,0.15);
     }
 
+    .hero-layout > div {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
     @media (max-width: 820px) {
       .hero-layout {
         grid-template-columns: 1fr;
       }
       .hero-photo {
-        order: -1;
+        grid-column: 1;
+        grid-row: 1;
         width: 100%;
-        height: 260px;
+        height: 280px;
         aspect-ratio: unset;
         object-fit: cover;
         object-position: center 15%;
         border-radius: 8px;
         margin: 0 0 1.5rem;
         box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      }
+      .hero-layout > div {
+        grid-column: 1;
+        grid-row: 2;
       }
     }
     @media (max-width: 768px) {
@@ -748,6 +760,7 @@
 <!-- HERO -->
 <section id="start">
   <div class="hero-layout">
+    <img src="foto-hero.jpg" alt="Lisa Serrano Martin-Prieto, Heilpraktikerin in Moers" class="hero-photo">
     <div>
       <p class="hero-label">Heilpraktikerin · Moers</p>
       <p class="hero-motto">Medicus curat, natura sanat. —<br><em>Der Therapeut begleitet, die Natur heilt.</em></p>
@@ -770,9 +783,6 @@
       </div>
       <a href="#kontakt" class="btn">Kontakt aufnehmen</a>
       <a href="#behandlung" class="btn btn-outline">Mehr erfahren</a>
-    </div>
-    <div>
-      <img src="foto-hero.jpg" alt="Lisa Serrano Martin-Prieto, Heilpraktikerin in Moers" class="hero-photo">
     </div>
   </div>
 </section>
