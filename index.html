@@ -1277,10 +1277,14 @@
           </div>
           <div>
             <label for="rueckruf">Rückruf gewünscht?</label>
-            <select id="rueckruf" name="rueckruf">
+            <select id="rueckruf" name="rueckruf" onchange="document.getElementById('tel-field').style.display=this.value==='Ja'?'block':'none'">
               <option value="Nein">Nein, E-Mail genügt</option>
               <option value="Ja">Ja, bitte anrufen</option>
             </select>
+          </div>
+          <div id="tel-field" style="display:none">
+            <label for="telefon">Telefonnummer</label>
+            <input type="tel" id="telefon" name="telefon" placeholder="0176 …">
           </div>
           <div>
             <label>
