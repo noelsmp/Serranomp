@@ -1239,9 +1239,9 @@
           <strong>Hinweis:</strong><br>
           Ich beantworte E-Mail-Anfragen üblicherweise innerhalb von 1–2 Werktagen.
           Bei dringendem Bedarf erreichen Sie mich telefonisch unter 0176 22923179.<br><br>
-          <strong>Hinweis zum Datenschutz:</strong> Bitte senden Sie über dieses Formular
-          <strong>keine Gesundheitsdaten, Symptome oder medizinische Informationen</strong>.
-          Nutzen Sie das Formular ausschließlich für allgemeine Terminanfragen.
+          <strong>Hinweis zum Datenschutz:</strong> Das Formular enthält bewusst kein Freitextfeld.
+          Bitte senden Sie Gesundheitsdaten, Symptome oder medizinische Informationen
+          ausschließlich im persönlichen Gespräch — nicht per Formular oder E-Mail.
         </div>
       </div>
 
@@ -1256,8 +1256,31 @@
             <input type="email" id="email" name="email" required placeholder="ihre@email.de">
           </div>
           <div>
-            <label for="anliegen">Anliegen</label>
-            <textarea id="anliegen" name="anliegen" placeholder="Bitte schildern Sie kurz Ihr Anliegen…"></textarea>
+            <label for="terminart">Art des Termins</label>
+            <select id="terminart" name="terminart" required>
+              <option value="" disabled selected>Bitte wählen…</option>
+              <option value="Erstgespräch">Erstgespräch</option>
+              <option value="Folgetermin">Folgetermin</option>
+              <option value="Informationsgespräch">Informationsgespräch / Frage</option>
+            </select>
+          </div>
+          <div>
+            <label for="zeitraum">Bevorzugter Zeitraum</label>
+            <select id="zeitraum" name="zeitraum">
+              <option value="" disabled selected>Bitte wählen…</option>
+              <option value="Morgens (8–12 Uhr)">Morgens (8–12 Uhr)</option>
+              <option value="Mittags (12–15 Uhr)">Mittags (12–15 Uhr)</option>
+              <option value="Nachmittags (15–20 Uhr)">Nachmittags (15–20 Uhr)</option>
+              <option value="Samstags">Samstags</option>
+              <option value="Flexibel">Flexibel</option>
+            </select>
+          </div>
+          <div>
+            <label for="rueckruf">Rückruf gewünscht?</label>
+            <select id="rueckruf" name="rueckruf">
+              <option value="Nein">Nein, E-Mail genügt</option>
+              <option value="Ja">Ja, bitte anrufen</option>
+            </select>
           </div>
           <div>
             <label>
