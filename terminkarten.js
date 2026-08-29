@@ -83,7 +83,7 @@ function card() {
         border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: GOLD, space: 3 } },
         children: [
           new TextRun({
-            text: 'Bitte rechtzeitig absagen bei Verhinderung.',
+            text: 'Bei Verhinderung bitten wir um frühzeitige Absage.',
             size: 11, italics: true, color: MUTED,
           }),
         ],
