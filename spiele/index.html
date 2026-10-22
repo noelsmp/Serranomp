@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Spielhalle</title>
+<style>
+:root{--bg:#0f1220;--panel:#1a1f36;--panel2:#242b4a;--text:#f1f3ff;--mut:#9aa3c7;--gold:#ffc83d;--acc:#6c5ce7;--ok:#2ecc71;--bad:#e74c3c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{font-size:1.1rem;margin:0;flex:1;cursor:pointer}
+.money{background:#000a;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;border-radius:20px;font-weight:700}
+main{max-width:900px;margin:0 auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.tile{background:var(--panel);border-radius:16px;padding:20px;cursor:pointer;border:2px solid transparent;transition:.15s}
+.tile:hover{border-color:var(--acc);transform:translateY(-2px)}
+.tile .ico{font-size:3rem}.tile h3{margin:8px 0 4px}.tile p{margin:0;color:var(--mut);font-size:.9rem}
+button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-size:1rem;font-weight:600;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.gold{background:var(--gold);color:#222}button.ghost{background:var(--panel2)}button.bad{background:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+h2{margin:8px 0}
+.tabs{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.tabs button{background:var(--panel2)}.tabs button.on{background:var(--acc)}
+/* Eier */
+#eggarea{position:relative;height:260px;background:linear-gradient(#27304f,#1a1f36);border-radius:16px;overflow:hidden;touch-action:manipulation}
+.egg{position:absolute;font-size:2.6rem;cursor:pointer;user-select:none;animation:pop .25s}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+/* Karten */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.card{border-radius:12px;padding:8px;text-align:center;border:3px solid #888;background:#2b3050;position:relative;min-height:170px;display:flex;flex-direction:column;justify-content:space-between}
+.card .em{font-size:3rem}.card .nm{font-weight:700;font-size:.85rem}.card .st{font-size:.75rem;color:var(--mut)}
+.card .r{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.card.sel{outline:3px solid var(--ok)}.card.click{cursor:pointer}
+.r-common{border-color:#9aa3c7}.r-rare{border-color:#4aa3ff;background:#1f3150}.r-epic{border-color:#b266ff;background:#34214f}.r-legend{border-color:var(--gold);background:linear-gradient(135deg,#4a3a0c,#7a5a10);box-shadow:0 0 14px #ffc83d88}
+.r-common .r{color:#9aa3c7}.r-rare .r{color:#4aa3ff}.r-epic .r{color:#b266ff}.r-legend .r{color:var(--gold)}
+.reveal{animation:flip .6s}@keyframes flip{from{transform:rotateY(90deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.pack{background:var(--panel);border-radius:14px;padding:14px;flex:1;min-width:200px}
+.lineup{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.slot{width:100px;min-height:130px;border:2px dashed var(--mut);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--mut);cursor:pointer}
+.slot .card{min-height:130px;width:100%;margin:0}
+.box{background:var(--panel);border-radius:14px;padding:14px;margin:10px 0}
+input,select{background:var(--panel2);color:var(--text);border:1px solid #3a4272;border-radius:8px;padding:10px;font-size:1rem;max-width:100%}
+.listing{display:flex;gap:12px;background:var(--panel);border-radius:12px;padding:10px;margin:8px 0;align-items:center}
+.listing img{width:80px;height:80px;object-fit:cover;border-radius:8px;background:#000}
+.listing .info{flex:1}.mut{color:var(--mut);font-size:.85rem}
+.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal>div{background:var(--panel);border-radius:16px;padding:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
+.modal img{max-width:100%;border-radius:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#000d;padding:10px 18px;border-radius:20px;z-index:30}
+</style>
+</head>
+<body>
+<header>
+  <h1 onclick="go('home')">🎮 Spielhalle</h1>
+  <div class="money" id="money">🪙 0</div>
+</header>
+<main id="app"></main>
+
+<script>
+/* ============ Daten ============ */
+const RAR={common:{n:'Gewöhnlich',w:60},rare:{n:'Selten',w:28},epic:{n:'Episch',w:10},legend:{n:'Legendär',w:2}};
+const STARS=[
+ ['Rocky Balboa','🥊','common',72],['Rambo','🪖','common',75],['Kickboxer','🦵','common',68],['Karate Kid','🥋','common',66],
+ ['Bruce Lee','🐉','rare',88],['Chuck Norris','🤠','rare',84],['Steven Seagal','🥷','rare',82],['Sylvester Stallone','💪','rare',85],
+ ['Jean-Claude Van Damme','🦵','epic',91],['Jackie Chan','🥋','epic',92],['Dolph Lundgren','🧊','epic',89],
+ ['Arnold Schwarzenegger','🦾','legend',99],['Bruce Lee (Legende)','🐲','legend',98]
+].map(([n,e,r,p],i)=>({id:'s'+i,name:n,em:e,r,p,set:'stars'}));
+const FOOT=[
+ ['Torwart-Talent','🧤','common',65],['Abwehr-Mauer','🛡️','common',68],['Mittelfeld-Motor','⚙️','common',70],['Flügelflitzer','💨','common',72],
+ ['Kapitän','©️','rare',82],['Spielmacher','🎯','rare',84],['Sturm-Tank','🚀','rare',85],
+ ['Weltklasse-Keeper','🧱','epic',90],['Dribbelkönig','🌀','epic',92],
+ ['Der Beste der Welt','🐐','legend',99]
+].map(([n,e,r,p],i)=>({id:'f'+i,name:n,em:e,r,p,set:'fussball'}));
+const ALL=[...STARS,...FOOT]; const byId=id=>ALL.find(c=>c.id===id);
+const SETS={stars:{name:'Action-Stars',pool:STARS},fussball:{name:'Fußball',pool:FOOT}};
+const PACKS=[{n:'Bronze-Pack',price:50,bonus:0,e:'📦'},{n:'Silber-Pack',price:200,bonus:3,e:'🎁'},{n:'Gold-Pack',price:800,bonus:10,e:'👑'}];
+
+/* ============ Speicher ============ */
+let S;
+function load(){try{S=JSON.parse(localStorage.getItem('spielhalle')||'null')}catch(e){}
+ S=Object.assign({money:100,inv:[],lineup:[null,null,null,null,null],items:[],listings:[],name:''},S||{});}
+function save(){try{localStorage.setItem('spielhalle',JSON.stringify(S))}catch(e){toast('Speicher voll')}}
+function money(d){S.money+=d;save();$('money').textContent='🪙 '+S.money}
+const $=id=>document.getElementById(id);
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ============ Karten ============ */
+function roll(set,bonus){let pool=SETS[set].pool;
+ const w=Object.entries(RAR).map(([k,v])=>[k,k==='common'?Math.max(5,v.w-bonus*3):v.w+(k==='common'?0:bonus)]);
+ const tot=w.reduce((a,b)=>a+b[1],0);let x=Math.random()*tot,r='common';
+ for(const [k,v] of w){if((x-=v)<0){r=k;break}}
+ const c=pool.filter(c=>c.r===r);return c[Math.floor(Math.random()*c.length)]}
+function cardHTML(c,extra='',style=''){return `<div class="card r-${c.r} ${extra}" style="${style}"><div class="r">${RAR[c.r].n}</div><div class="em">${c.em}</div><div class="nm">${esc(c.name)}</div><div class="st">⭐ ${c.p}</div></div>`}
+
+/* ============ Navigation ============ */
+let view='home',tab='';
+function go(v,t){view=v;tab=t||'';render();window.scrollTo(0,0)}
+function render(){const a=$('app');money(0);
+ ({home,eier,fussball,plaza})[view](a)}
+
+function home(a){a.innerHTML=`<h2>Willkommen! Such dir ein Spiel aus</h2>
+<div class="grid">
+ <div class="tile" onclick="go('eier')"><div class="ico">🥚🥊</div><h3>Steel & Egg</h3><p>Eier sammeln, Geld verdienen, Action-Stars ziehen.</p></div>
+ <div class="tile" onclick="go('fussball')"><div class="ico">⚽🃏</div><h3>Fußball-Karten</h3><p>Fußball-Packs öffnen und dein Team aufstellen.</p></div>
+ <div class="tile" onclick="go('plaza')"><div class="ico">📸🔄</div><h3>Trading Plaza</h3><p>Foto machen, Tauschanfrage schicken, auf dem Markt handeln.</p></div>
+</div>
+<div class="box"><b>Dein Name</b> (für Tauschanfragen)<div class="row"><input id="nm" value="${esc(S.name)}" placeholder="Name"><button onclick="S.name=$('nm').value.trim();save();toast('Gespeichert')">Speichern</button></div>
+<p class="mut">Dein Spielstand liegt nur in diesem Browser. Die Seite ist nicht öffentlich verlinkt, nur wer den Link hat, kann spielen.</p></div>`}
+
+/* ---------- Steel & Egg ---------- */
+let eggTimer;
+function eier(a){clearInterval(eggTimer);
+ a.innerHTML=`<h2>🥚 Steel & Egg</h2>
+ <p class="mut">Tippe auf die Eier, bevor sie verschwinden. Jedes Ei = 🪙 5. Gold-Eier = 🪙 25.</p>
+ <div id="eggarea"></div>
+ <h3>Packs kaufen</h3><div class="row">${PACKS.map((p,i)=>`<div class="pack">${p.e} <b>${p.n}</b><br><span class="mut">5 Karten · bessere Chancen${p.bonus?' (+'+p.bonus+')':''}</span><div class="row"><button class="gold" onclick="openPack('stars',${i})">🪙 ${p.price}</button></div></div>`).join('')}</div>
+ <div id="packres"></div>
+ <h3>Deine Reihe</h3><p class="mut">Tippe auf einen Platz und wähle eine Karte. Deine Reihen-Stärke: <b id="pwr"></b></p>
+ <div class="lineup" id="lineup"></div>
+ <h3>Sammlung (${S.inv.filter(i=>byId(i).set==='stars').length})</h3><div class="cards" id="coll"></div>`;
+ lineupUI('stars');collUI('stars');
+ const area=$('eggarea');
+ eggTimer=setInterval(()=>{if(view!=='eier'){clearInterval(eggTimer);return}
+  const gold=Math.random()<.1,e=document.createElement('div');e.className='egg';e.textContent=gold?'🥇':'🥚';
+  e.style.left=Math.random()*(area.clientWidth-50)+'px';e.style.top=Math.random()*(area.clientHeight-50)+'px';
+  e.onpointerdown=()=>{money(gold?25:5);e.remove()};area.appendChild(e);setTimeout(()=>e.remove(),2200)},650)}
+
+function openPack(set,i){const p=PACKS[i];if(S.money<p.price)return toast('Zu wenig Geld 🪙');
+ money(-p.price);const got=Array.from({length:5},()=>roll(set,p.bonus));S.inv.push(...got.map(c=>c.id));save();
+ got.sort((a,b)=>b.p-a.p);
+ $('packres').innerHTML=`<div class="box"><b>Du hast gezogen:</b><div class="cards" style="margin-top:8px">${got.map((c,k)=>cardHTML(c,'reveal','animation-delay:'+k*.25+'s')).join('')}</div></div>`;
+ $('money').textContent='🪙 '+S.money;collUI(set);lineupUI(set)}
+
+function lineupUI(set){const n=set==='stars'?5:5;const L=S.lineup;const el=$('lineup');if(!el)return;
+ const key=set==='stars'?'lineup':'lineupF';if(!S[key])S[key]=[null,null,null,null,null];
+ el.innerHTML=S[key].map((id,i)=>`<div class="slot" onclick="pickSlot('${set}',${i})">${id?cardHTML(byId(id)):'+'}</div>`).join('');
+ const pw=S[key].reduce((s,id)=>s+(id?byId(id).p:0),0);const p=$('pwr');if(p)p.textContent=pw}
+function pickSlot(set,i){const key=set==='stars'?'lineup':'lineupF';
+ const own=[...new Set(S.inv)].filter(id=>byId(id).set===set&&!S[key].includes(id)||S[key][i]===id);
+ const m=document.createElement('div');m.className='modal';m.onclick=e=>{if(e.target===m)m.remove()};
+ m.innerHTML=`<div><h3>Karte wählen</h3><div class="cards">${own.map(id=>`<div onclick="setSlot('${set}',${i},'${id}')">${cardHTML(byId(id),'click')}</div>`).join('')||'<p class="mut">Noch keine Karten. Kauf ein Pack!</p>'}</div><div class="row">${S[key][i]?`<button class="ghost" onclick="setSlot('${set}',${i},null)">Platz leeren</button>`:''}<button class="ghost" onclick="this.closest('.modal').remove()">Schließen</button></div></div>`;
+ document.body.appendChild(m)}
+function setSlot(set,i,id){const key=set==='stars'?'lineup':'lineupF';S[key][i]=id;save();document.querySelector('.modal')?.remove();lineupUI(set)}
+function collUI(set){const el=$('coll');if(!el)return;const cnt={};S.inv.forEach(id=>{if(byId(id).set===set)cnt[id]=(cnt[id]||0)+1});
+ el.innerHTML=Object.keys(cnt).sort((a,b)=>byId(b).p-byId(a).p).map(id=>`<div>${cardHTML(byId(id))}<div class="mut" style="text-align:center">×${cnt[id]} · <a href="#" style="color:var(--gold)" onclick="sell('${id}',event)">verkaufen 🪙${sellVal(byId(id))}</a></div></div>`).join('')||'<p class="mut">Noch leer.</p>'}
+function sellVal(c){return {common:10,rare:40,epic:150,legend:600}[c.r]}
+function sell(id,e){e.preventDefault();const k=S.inv.indexOf(id);if(k<0)return;
+ const used=['lineup','lineupF'].some(key=>(S[key]||[]).includes(id))&&S.inv.filter(x=>x===id).length===1;
+ if(used)return toast('Karte ist in der Reihe');
+ S.inv.splice(k,1);money(sellVal(byId(id)));collUI(byId(id).set)}
+
+/* ---------- Fußball ---------- */
+function fussball(a){clearInterval(eggTimer);
+ a.innerHTML=`<h2>⚽ Fußball-Karten</h2>
+ <p class="mut">Hier kommt dein bestehendes Fußballkartenspiel hinein. Bis dahin: ein Fußball-Set mit denselben Münzen.</p>
+ <div class="row">${PACKS.map((p,i)=>`<div class="pack">${p.e} <b>${p.n}</b><div class="row"><button class="gold" onclick="openPack('fussball',${i})">🪙 ${p.price}</button></div></div>`).join('')}</div>
+ <div id="packres"></div>
+ <h3>Deine Aufstellung</h3><p class="mut">Stärke: <b id="pwr"></b></p><div class="lineup" id="lineup"></div>
+ <h3>Sammlung</h3><div class="cards" id="coll"></div>
+ <div class="row"><button class="ghost" onclick="go('eier')">Mehr Münzen bei Steel & Egg 🥚</button></div>`;
+ lineupUI('fussball');collUI('fussball')}
+
+/* ---------- Trading Plaza ---------- */
+const NPC=[{who:'Max',name:'Alte Sammlermünze',e:'🪙'},{who:'Lena',name:'Retro-Kopfhörer',e:'🎧'},{who:'Tom',name:'Skateboard',e:'🛹'}];
+function plaza(a){clearInterval(eggTimer);
+ a.innerHTML=`<h2>🔄 Trading Plaza</h2>
+ <div class="tabs"><button class="${tab!=='mine'&&tab!=='new'?'on':''}" onclick="go('plaza','')">Markt</button><button class="${tab==='new'?'on':''}" onclick="go('plaza','new')">📸 Neu</button><button class="${tab==='mine'?'on':''}" onclick="go('plaza','mine')">Meine Sachen</button></div><div id="pz"></div>`;
+ const p=$('pz');
+ if(tab==='new'){p.innerHTML=`<div class="box"><b>Mach ein Foto von deiner Sache</b>
+  <div class="row"><input type="file" id="ph" accept="image/*" capture="environment"></div>
+  <div class="row"><input id="iname" placeholder="Was ist das?" maxlength="40"></div>
+  <img id="prev" style="max-width:200px;border-radius:10px;display:none">
+  <div class="row"><button onclick="addItem()">Auf den Markt stellen</button></div></div>`;
+  $('ph').onchange=e=>shrink(e.target.files[0],d=>{window._ph=d;const i=$('prev');i.src=d;i.style.display='block'})}
+ else if(tab==='mine'){p.innerHTML=(S.items.length?S.items.map((it,i)=>`<div class="listing"><img src="${it.img}"><div class="info"><b>${esc(it.name)}</b><div class="mut">${it.listed?'Auf dem Markt':'Privat'}</div></div><div><button onclick="reqTrade(${i})">Tausch senden</button> <button class="ghost" onclick="delItem(${i})">🗑</button></div></div>`).join(''):'<p class="mut">Noch nichts. Mach ein Foto unter „Neu“.</p>')
+   +`<div class="box"><b>Tauschkarten</b><p class="mut">Du kannst auch Karten tauschen: wähle beim Senden eine Karte dazu.</p></div>`}
+ else{const mine=S.items.filter(i=>i.listed).map(i=>({who:S.name||'Du',name:i.name,img:i.img,own:1}));
+  p.innerHTML=`<p class="mut">Alle Angebote auf dem Platz. Eigene Sachen erscheinen hier, sobald du sie einstellst. Zum Tauschen mit Freunden schick ihnen eine Tauschanfrage per Link.</p>`+
+  [...mine,...NPC].map(l=>`<div class="listing">${l.img?`<img src="${l.img}">`:`<div style="font-size:3rem;width:80px;text-align:center">${l.e}</div>`}<div class="info"><b>${esc(l.name)}</b><div class="mut">von ${esc(l.who)}</div></div>${l.own?'':`<button onclick="npcOffer('${esc(l.name)}','${esc(l.who)}')">Anfrage</button>`}</div>`).join('')}}
+function shrink(file,cb){if(!file)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+ const m=240,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;
+ c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.6))};im.src=r.result};r.readAsDataURL(file)}
+function addItem(){const n=$('iname').value.trim();if(!window._ph||!n)return toast('Foto und Name nötig');
+ S.items.push({name:n,img:window._ph,listed:true});window._ph=null;save();toast('Eingestellt!');go('plaza','')}
+function delItem(i){S.items.splice(i,1);save();go('plaza','mine')}
+function npcOffer(name,who){toast('Anfrage an '+who+' gesendet (Demo). Echte Anfragen gehen per Link.')}
+function reqTrade(i){const it=S.items[i];
+ const own=[...new Set(S.inv)];
+ const m=document.createElement('div');m.className='modal';m.onclick=e=>{if(e.target===m)m.remove()};
+ m.innerHTML=`<div><h3>Tauschanfrage</h3><img src="${it.img}" style="max-height:160px"><p><b>${esc(it.name)}</b></p>
+ <div class="row"><input id="want" placeholder="Was möchtest du dafür?" maxlength="60" style="width:100%"></div>
+ <div class="row"><select id="plus"><option value="">Keine Zusatzkarte</option>${own.map(id=>`<option value="${id}">+ ${esc(byId(id).name)}</option>`).join('')}</select></div>
+ <div class="row"><button class="gold" id="mk">Link erstellen</button><button class="ghost" onclick="this.closest('.modal').remove()">Abbrechen</button></div><div id="lk"></div></div>`;
+ document.body.appendChild(m);
+ $('mk').onclick=()=>{const d={f:S.name||'Jemand',n:it.name,i:it.img,w:$('want').value.trim(),c:$('plus').value};
+  const link=location.origin+location.pathname+'#t='+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
+  $('lk').innerHTML=`<p class="mut">Schick diesen Link an die Person:</p><input id="lkv" readonly value="${link}" style="width:100%"><div class="row"><button onclick="share('${'__'}')">Teilen / Kopieren</button></div>`;
+  window._lnk=link;$('lkv').onclick=e=>e.target.select()}}
+function share(){const l=window._lnk;if(navigator.share)navigator.share({title:'Tauschanfrage',text:'Ich möchte tauschen!',url:l}).catch(()=>{});
+ else if(navigator.clipboard)navigator.clipboard.writeText(l).then(()=>toast('Link kopiert'));}
+function incoming(){const h=location.hash;if(!h.startsWith('#t='))return;
+ try{const d=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(h.slice(3))))));
+  const m=document.createElement('div');m.className='modal';
+  m.innerHTML=`<div><h3>📩 Tauschanfrage von ${esc(d.f)}</h3><img src="${esc(d.i)}"><p><b>${esc(d.n)}</b></p>
+  <p>Möchte dafür: <b>${esc(d.w||'(offen)')}</b>${d.c&&byId(d.c)?'<br>Dazu Karte: <b>'+esc(byId(d.c).name)+'</b>':''}</p>
+  <div class="row"><button class="gold" id="ac">Annehmen</button><button class="bad" id="de">Ablehnen</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>{m.remove();history.replaceState(null,'',location.pathname)};
+  $('de').onclick=()=>{close();toast('Abgelehnt')};
+  $('ac').onclick=()=>{S.items.push({name:d.n+' (von '+d.f+')',img:d.i,listed:false});if(d.c&&byId(d.c))S.inv.push(d.c);save();close();toast('Angenommen! Schau unter „Meine Sachen“');go('plaza','mine')}
+ }catch(e){toast('Ungültiger Link')}}
+
+load();render();incoming();
+</script>
+</body>
+</html>
