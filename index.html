@@ -498,6 +498,45 @@
       .price-value { margin-left: auto; }
     }
 
+    .price-row { flex-wrap: wrap; }
+
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-left: 0.5rem;
+      border-radius: 50%;
+      border: 1px solid var(--sage);
+      background: transparent;
+      color: var(--sage-dk);
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-weight: bold;
+      font-size: 0.78rem;
+      line-height: 1;
+      cursor: pointer;
+      vertical-align: 0.15em;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .info-btn:hover, .info-btn[aria-expanded="true"] { background: var(--sage); color: #fff; }
+
+    .info-btn-inline { margin: 0 0.15rem; cursor: default; }
+
+    .price-info {
+      flex: 1 0 100%;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--sage-lt);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
+      margin-top: 0.4rem;
+    }
+
     .honorar-note {
       background: var(--sage-lt);
       border-radius: 4px;
@@ -1261,65 +1300,88 @@
       <h3>Labordiagnostik</h3>
       <ul class="price-list">
         <li class="price-row">
-          <div><span class="price-name">Blutwertkontrolle</span><span class="price-desc">Blutabnahme mit anschließender ausführlicher Auswertung Ihrer Werte · Laborkosten werden separat berechnet</span></div>
+          <div><span class="price-name">Blutwertkontrolle</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-blut" aria-label="Mehr Informationen zu Blutwertkontrolle">i</button><span class="price-desc">Blutabnahme mit ausführlicher Auswertung · zzgl. Laborkosten</span></div>
           <span class="price-dots"></span>
           <span class="price-time">30 Min.</span>
           <span class="price-value">79 €</span>
+          <div class="price-info" id="pi-blut" hidden>Die Blutabnahme erfolgt in der Praxis, die Analyse übernimmt das BIO-LABOR Hemer. Welche Werte bestimmt werden, legen wir vorab gemeinsam fest – von der Basisuntersuchung bis zu einzelnen Parametern wie Vitaminen, Mineralstoffen oder Schilddrüsenwerten. Im Anschluss bespreche ich die Ergebnisse ausführlich mit Ihnen. Die Laborkosten richten sich nach dem Umfang der Werte und werden separat berechnet.</div>
         </li>
       </ul>
     </div>
 
     <div class="price-group">
       <h3>Infusionen</h3>
-      <p class="price-group-note">Alle Infusionspreise sind Ab-Preise. Die genaue Zusammensetzung und der Preis werden im Vorgespräch individuell besprochen.</p>
+      <p class="price-group-note">Alle Infusionspreise sind Ab-Preise. Die genaue Zusammensetzung und der Preis werden im Vorgespräch individuell besprochen. Tippen Sie auf <span class="info-btn info-btn-inline" aria-hidden="true">i</span> für mehr Informationen.</p>
       <ul class="price-list">
         <li class="price-row">
-          <div><span class="price-name">Basis-Infusion (NaCl)</span></div>
+          <div><span class="price-name">Basis-Infusion (NaCl)</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-basis" aria-label="Mehr Informationen zu Basis-Infusion (NaCl)">i</button></div>
           <span class="price-dots"></span>
           <span class="price-time">30 Min.</span>
           <span class="price-value">ab 49 €</span>
+          <div class="price-info" id="pi-basis" hidden>Physiologische Kochsalzlösung als Grundlage jeder Infusion. Sie kann für sich allein gegeben oder mit einzelnen Wirkstoffen (Shots) ergänzt werden.</div>
         </li>
         <li class="price-row">
-          <div><span class="price-name">Zusätzlicher Wirkstoff (Shot)</span><span class="price-desc">Ergänzung zu einer Infusion</span></div>
+          <div><span class="price-name">Zusätzlicher Wirkstoff (Shot)</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-shot" aria-label="Mehr Informationen zu Zusätzlicher Wirkstoff (Shot)">i</button><span class="price-desc">Ergänzung zu einer Infusion</span></div>
           <span class="price-dots"></span>
           <span class="price-time">30 Min.</span>
           <span class="price-value">ab 39 €</span>
+          <div class="price-info" id="pi-shot" hidden>Ein einzelner Wirkstoff, der einer Infusion hinzugefügt wird, z. B. Vitamin C, B-Vitamine, Magnesium, Zink oder Glutathion. Welche Ergänzung sinnvoll ist, besprechen wir im Vorgespräch.</div>
         </li>
         <li class="price-row">
-          <div><span class="price-name">Relax Drip</span></div>
+          <div><span class="price-name">Relax Drip</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-relax" aria-label="Mehr Informationen zu Relax Drip">i</button></div>
           <span class="price-dots"></span>
           <span class="price-time">45 Min.</span>
           <span class="price-value">ab 119 €</span>
+          <div class="price-info" id="pi-relax" hidden>Infusion mit Mikronährstoffen wie Magnesium und B-Vitaminen. Die Zusammensetzung wird im Vorgespräch individuell abgestimmt.</div>
         </li>
         <li class="price-row">
-          <div><span class="price-name">Beauty Drip</span></div>
-          <span class="price-dots"></span>
-          <span class="price-time">45 Min.</span>
-          <span class="price-value">ab 129 €</span>
-        </li>
-        <li class="price-row">
-          <div><span class="price-name">Protect Drip</span></div>
+          <div><span class="price-name">Protect Drip</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-protect" aria-label="Mehr Informationen zu Protect Drip">i</button></div>
           <span class="price-dots"></span>
           <span class="price-time">45 Min.</span>
           <span class="price-value">ab 149 €</span>
+          <div class="price-info" id="pi-protect" hidden>Infusion mit hochdosiertem Vitamin C sowie Zink und Selen – besonders gefragt in der kalten Jahreszeit. Die Zusammensetzung wird im Vorgespräch individuell abgestimmt.</div>
         </li>
         <li class="price-row">
-          <div><span class="price-name">Detox Drip</span></div>
+          <div><span class="price-name">Detox Drip</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-detox" aria-label="Mehr Informationen zu Detox Drip">i</button></div>
           <span class="price-dots"></span>
           <span class="price-time">45 Min.</span>
           <span class="price-value">ab 149 €</span>
+          <div class="price-info" id="pi-detox" hidden>Infusion mit Glutathion, Vitamin C und weiteren Mikronährstoffen. Die Zusammensetzung wird im Vorgespräch individuell abgestimmt.</div>
         </li>
         <li class="price-row">
-          <div><span class="price-name">Perfect Age Drip</span></div>
-          <span class="price-dots"></span>
-          <span class="price-time">45 Min.</span>
-          <span class="price-value">ab 249 €</span>
-        </li>
-        <li class="price-row">
-          <div><span class="price-name">NAD+ Infusion</span></div>
+          <div><span class="price-name">NAD+ Infusion</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-nad" aria-label="Mehr Informationen zu NAD+ Infusion">i</button></div>
           <span class="price-dots"></span>
           <span class="price-time">60 Min.</span>
           <span class="price-value">auf Anfrage</span>
+          <div class="price-info" id="pi-nad" hidden>NAD+ (Nicotinamid-Adenin-Dinukleotid) ist ein Coenzym, das in allen Körperzellen vorkommt. Die Infusion wird langsam über etwa eine Stunde verabreicht. Preis und Ablauf besprechen wir persönlich.</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="price-group">
+      <h3>Lipolyse</h3>
+      <p class="price-group-note">Injektionsbehandlung für umschriebene Fettpolster, z.&nbsp;B. an Kinn, Oberarmen, Oberschenkeln, Bauch oder Hüften.</p>
+      <ul class="price-list">
+        <li class="price-row">
+          <div><span class="price-name">Lipolyse – Einzelbehandlung</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-lipo1" aria-label="Mehr Informationen zu Lipolyse – Einzelbehandlung">i</button></div>
+          <span class="price-dots"></span>
+          <span class="price-time">30 Min.</span>
+          <span class="price-value">290 €</span>
+          <div class="price-info" id="pi-lipo1" hidden>Eine Behandlung einer Körperregion mit Injektionen in das Unterhautfettgewebe. Ob die Behandlung für Sie infrage kommt, klären wir im Vorgespräch. Dort kläre ich Sie auch ausführlich über Ablauf, Nebenwirkungen und Risiken auf.</div>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Lipolyse – Paket mit 3 Behandlungen</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-lipo3" aria-label="Mehr Informationen zu Lipolyse – Paket mit 3 Behandlungen">i</button></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">790 €</span>
+          <div class="price-info" id="pi-lipo3" hidden>Drei Behandlungen einer Körperregion im Abstand von einigen Wochen. Gegenüber drei Einzelbehandlungen sparen Sie 80 €. Ob die Behandlung für Sie infrage kommt, klären wir im Vorgespräch. Dort kläre ich Sie auch ausführlich über Ablauf, Nebenwirkungen und Risiken auf.</div>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Lipolyse – Folgebehandlung</span><button type="button" class="info-btn" aria-expanded="false" aria-controls="pi-lipof" aria-label="Mehr Informationen zu Lipolyse – Folgebehandlung">i</button></div>
+          <span class="price-dots"></span>
+          <span class="price-time">30 Min.</span>
+          <span class="price-value">259 €</span>
+          <div class="price-info" id="pi-lipof" hidden>Weitere Behandlung im Anschluss an eine bereits begonnene Lipolyse-Behandlung. Ob die Behandlung für Sie infrage kommt, klären wir im Vorgespräch. Dort kläre ich Sie auch ausführlich über Ablauf, Nebenwirkungen und Risiken auf.</div>
         </li>
       </ul>
     </div>
@@ -1840,5 +1902,15 @@
   });
 </script>
 
+<script>
+  document.querySelectorAll('.price-list .info-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var box = document.getElementById(btn.getAttribute('aria-controls'));
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      box.hidden = open;
+    });
+  });
+</script>
 </body>
 </html>
