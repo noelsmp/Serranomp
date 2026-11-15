@@ -425,6 +425,79 @@
       font-size: 0.85rem;
     }
 
+    .price-group { margin-top: 2.5rem; }
+
+    .price-group h3 {
+      font-size: 1.3rem;
+      color: var(--sage-dk);
+      margin-bottom: 0.25rem;
+    }
+
+    .price-group-note {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .price-list {
+      list-style: none;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 1.5rem;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .price-row:last-child { border-bottom: none; }
+
+    .price-name { font-size: 1.02rem; color: var(--text); }
+
+    .price-desc {
+      display: block;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .price-dots {
+      flex: 1;
+      border-bottom: 1px dotted rgba(107,143,113,0.45);
+      transform: translateY(-0.3rem);
+      min-width: 1rem;
+    }
+
+    .price-time {
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .price-value {
+      font-size: 1.1rem;
+      color: var(--sage-dk);
+      white-space: nowrap;
+      min-width: 5.5rem;
+      text-align: right;
+    }
+
+    @media (max-width: 500px) {
+      .price-list { padding: 0.25rem 1rem; }
+      .price-dots { display: none; }
+      .price-row { flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+      .price-row > div:first-child { flex: 1 0 100%; }
+      .price-value { margin-left: auto; }
+    }
+
     .honorar-note {
       background: var(--sage-lt);
       border-radius: 4px;
@@ -1024,7 +1097,7 @@
     </div>
 
     <h3 style="margin-top:2rem">Kosten</h3>
-    <p style="margin-top:0.75rem">Die Blutabnahme in der Praxis kostet pauschal <strong>79 &euro;</strong>. Die Laborkosten werden nach Aufwand abgerechnet und richten sich nach dem Umfang der analysierten Werte — ich informiere Sie vorab transparent über die zu erwartenden Kosten.</p>
+    <p style="margin-top:0.75rem">Die Blutabnahme in der Praxis kostet pauschal <strong>79 &euro;</strong>. Die Laborkosten werden nach Aufwand abgerechnet und richten sich nach dem Umfang der analysierten Werte — ich informiere Sie vorab transparent über die zu erwartenden Kosten. Zur <a href="#preisliste" style="color:var(--sage-dk)">Preisliste</a>.</p>
     <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Die Blutanalyse ergänzt die naturheilkundliche Behandlung und ersetzt keine ärztliche Diagnostik. Bei medizinisch notwendigen Untersuchungen empfehle ich ergänzend den Weg zum Hausarzt.</p>
   </div>
 </section>
@@ -1140,7 +1213,7 @@
     </div>
 
     <h3 style="margin-top:2rem">Kosten</h3>
-    <p style="margin-top:0.75rem">Die Kosten richten sich nach der individuellen Zusammensetzung und werden im Erstgespräch transparent besprochen.</p>
+    <p style="margin-top:0.75rem">Infusionen gibt es ab <strong>49 &euro;</strong>. Die Kosten richten sich nach der individuellen Zusammensetzung und werden im Vorgespräch transparent besprochen. Alle Preise finden Sie in der <a href="#preisliste" style="color:var(--sage-dk)">Preisliste</a>.</p>
     <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Die Infusionstherapie ersetzt keine ärztliche Behandlung. Vor der ersten Infusion erfolgt eine sorgfältige Aufklärung über Inhaltsstoffe, Wirkweise und mögliche Risiken.</p>
   </div>
 </section>
@@ -1183,6 +1256,73 @@
     <p style="font-size:0.9rem;color:var(--muted);margin-top:1rem">
       Weitere Termine nach individuellem Aufwand.
     </p>
+
+    <div class="price-group" id="preisliste">
+      <h3>Labordiagnostik</h3>
+      <ul class="price-list">
+        <li class="price-row">
+          <div><span class="price-name">Blutwertkontrolle</span><span class="price-desc">Blutabnahme mit anschließender ausführlicher Auswertung Ihrer Werte · Laborkosten werden separat berechnet</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">30 Min.</span>
+          <span class="price-value">79 €</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="price-group">
+      <h3>Infusionen</h3>
+      <p class="price-group-note">Alle Infusionspreise sind Ab-Preise. Die genaue Zusammensetzung und der Preis werden im Vorgespräch individuell besprochen.</p>
+      <ul class="price-list">
+        <li class="price-row">
+          <div><span class="price-name">Basis-Infusion (NaCl)</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">30 Min.</span>
+          <span class="price-value">ab 49 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Zusätzlicher Wirkstoff (Shot)</span><span class="price-desc">Ergänzung zu einer Infusion</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">30 Min.</span>
+          <span class="price-value">ab 39 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Relax Drip</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">ab 119 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Beauty Drip</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">ab 129 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Protect Drip</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">ab 149 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Detox Drip</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">ab 149 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">Perfect Age Drip</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">45 Min.</span>
+          <span class="price-value">ab 249 €</span>
+        </li>
+        <li class="price-row">
+          <div><span class="price-name">NAD+ Infusion</span></div>
+          <span class="price-dots"></span>
+          <span class="price-time">60 Min.</span>
+          <span class="price-value">auf Anfrage</span>
+        </li>
+      </ul>
+    </div>
 
     <div class="honorar-note">
       <strong>Erstattung durch Krankenkassen:</strong><br>
